@@ -9,3 +9,10 @@ log:
 
 commands:
 	cat Makefile
+
+
+
+# TEMPORARY
+
+run:
+	g++ timelogger.cpp -o timelogger ; ./timelogger
