@@ -114,6 +114,25 @@ int start_calculator(){
 }
 
 int end_calculator(){
+
+    // Extract the break first:
+
+    ifstream break_file(".break_total.txt");
+
+    int break_total;
+
+    break_file >> break_total;
+
+        // Step 2: clear the file (truncate to 0 length)
+    {
+        ofstream out(".break_total.txt", ios::trunc);
+        // file is now empty
+    }
+
+    break_file.close();
+
+    cout << "Break Total: " << break_total;
+
     auto now = system_clock::now();
     time_t end_state = system_clock::to_time_t(now);
 
@@ -125,24 +144,16 @@ int end_calculator(){
     start_file >> start_state;
     start_file >> start_time;
 
-
     long elapsed = end_state - start_state;
     long mins = elapsed / 60;
     long hours = mins / 60;
 
-    ifstream break_file(".break_total");
-
-    int break_total;
-
-    break_file >> break_total;
-    break_file.close();
-
 
     ofstream log_file("logged_times.csv", ios::app); // append mode
 
-    log_file << put_time(std::localtime(&end_state), "%Y-%m-%d")   << ","  // Date
-             << start_time                                         << ","  // Start
-             << put_time(localtime(&end_state), "%H:%M \n")        << ","  // End
+    log_file << put_time(localtime(&end_state), "%Y-%m-%d")   << ","  // Date
+             << put_time(localtime(&start_state), "%H:%M") << ","  // Start
+             << put_time(localtime(&end_state), "%H:%M")        << ","  // End
              << break_total                                        << ","  // Break Total
              << hours                                              << "\n";// Total hours
 
