@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iomanip> 
 #include <string>
+#include <thread>
+#include <atomic>
 
 using namespace std;
 using namespace std::chrono;

@@ -1,13 +1,14 @@
 #include "timelogger.h"
 
+
+atomic<bool> quit(false);
+
 int main(){
 
 
     int command;
     cout << "Following commands available:\n 1.start \n 2.end \n 3.break \n Input a command: \n";
     cin >> command;
-
-    date_calculator();
     
     
     switch(command) {
@@ -25,33 +26,61 @@ int main(){
             break;
         }
 
-    
-
-        //ofstream file("logged_times.csv"); // append mode
     return 0;
+}
+
+
+time_t get_current_time(){
+    auto now_f = system_clock::now();
+    time_t now_c = system_clock::to_time_t(now_f); // Now first
+
+    return now_c;
+}
+
+void input_thread(){
+    string s;
+
+    while(cin >> s){
+        if (s == "q"){
+            quit = true;
+            break;
+        }
+    }
 }
 
 
 int break_start(){
 
-    auto now_f = system_clock::now();
-    time_t now_c = system_clock::to_time_t(now_f); // Now first
-
+/*     auto now_f = system_clock::now();
+    time_t now_c = system_clock::to_time_t(now_f); // Now first */
+    time_t now_c = get_current_time();
     ofstream file(".break_start.txt");
     
     // Store it as unix timestamp
     file << now_c;
     file.close();
 
+    thread t(input_thread); // Create thread that checks for input.
+
     cout << "Break started. Press q to cancel the break. \n";
-    while(true){
-        string input;
-        cin >> input;            // wait for user input
-        if (input == "q") {
-            break_stop();
-            break;
-        }
+
+
+    int total = 0;
+    while (!quit) {
+
+        time_t elapsed = time(nullptr) - now_c;  // seconds since break started
+        int minutes = elapsed / 60;
+        int seconds = elapsed % 60;
+
+        cout << "\rOn break: " << minutes << ":" 
+        << (seconds < 10 ? "0" : "") << seconds << flush;
+        total++;
+        this_thread::sleep_for(chrono::milliseconds(1000));
+
     }
+    t.join();
+
+    break_stop();
     return 0;
 }
 
@@ -85,7 +114,9 @@ int break_stop(){
     saveTotal << total;
     saveTotal.close();
 
-    cout << "Break ended. Duration: " << seconds << " seconds.\nWhich is: " << minutes << " minutes \n";
+    int remains = seconds % 60;
+
+    cout << "Break ended. Duration: " << seconds << " seconds.\nWhich is: " << minutes << " minutes and " << remains << " seconds. \n";
 
     return 0;
 
