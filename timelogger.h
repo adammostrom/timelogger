@@ -15,3 +15,4 @@ int break_stop();
 int date_calculator();
 int start_calculator();
 int end_calculator();
+void manual_day_entry();

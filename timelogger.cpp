@@ -2,12 +2,13 @@
 
 
 atomic<bool> quit(false);
+atomic<bool> day_started(false);
 
 int main(){
 
 
     int command;
-    cout << "Following commands available:\n 1.start \n 2.end \n 3.break \n Input a command: \n";
+    cout << "Following commands available:\n 1.start \n 2.end \n 3.break \n 4.manual day entry \n Input a command: \n";
     cin >> command;
     
     
@@ -16,10 +17,18 @@ int main(){
             start_calculator();
             break;
         case 2:
+            if(!day_started){
+                cout << "No day start has been initiated, run the 'manual day start command'\n";
+                main();
+            }
             end_calculator();
             break;
         case 3:
             break_start();
+            break;
+        case 4:
+            // For cases when you forget to start the day logger.
+            manual_day_entry();
             break;
         default:
             cout << "Cancelled or no command given.";
@@ -27,6 +36,47 @@ int main(){
         }
 
     return 0;
+}
+
+void manual_day_entry(){
+
+    cout << "Input the time the day started with format: HH:MM \n";
+    string hhmm;
+    cin >> hhmm;
+    int hh, mm;
+    char colon;
+
+    stringstream ss(hhmm);
+    ss >> hh >> colon >> mm;
+
+    // get today's date
+    time_t now = time(nullptr);
+    tm local_tm = *localtime(&now);
+
+    // overwrite hour/minute/second
+    local_tm.tm_hour = hh;
+    local_tm.tm_min = mm;
+    local_tm.tm_sec = 0;
+
+    // convert to epoch seconds
+    time_t started_time = mktime(&local_tm);
+
+    ofstream start_file(".start_state.txt"); 
+
+    /*
+    Write the file as: 
+    state (unix time)
+    time (hour:minutes, ex: 00:40)
+    */
+    start_file << started_time << "\n";
+    start_file << put_time(localtime(&started_time), "%H:%M \n");
+
+    start_file.close();
+
+    day_started = true;
+
+    main();
+
 }
 
 
