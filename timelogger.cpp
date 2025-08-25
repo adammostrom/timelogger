@@ -2,7 +2,11 @@
 
 
 atomic<bool> quit(false);
-atomic<bool> day_started(false);
+
+string csv_file = "logged_times.csv";
+string csv_testfile = "TEST_logged_times.csv";
+
+string active_log_file = csv_testfile;
 
 int main(){
 
@@ -49,6 +53,8 @@ bool check_day_started(){
 
 }
 
+
+
 void get_current_worked(){
 
     ifstream start_time_file(".start_state.txt");
@@ -63,11 +69,23 @@ void get_current_worked(){
 
     // Read from file
     ifstream break_time_file(".break_total.txt");
-    time_t break_total;
-    break_time_file >> break_total;
+
+    long break_total = 0;
+
+    if( break_time_file >> break_total){
+        
+    };
 
     int break_hours = break_total / 3600;
     int break_minutes = (break_total % 3600) / 60;
+
+    if (!break_time_file) {
+        break_hours = 0;
+        break_minutes = 0;
+    }
+
+
+ 
 
 
     time_t now = time(nullptr);
@@ -119,7 +137,6 @@ void manual_day_entry(){
 
     start_file.close();
 
-    day_started = true;
 
     main();
 
@@ -205,7 +222,7 @@ int break_stop(){
 
     total += seconds;
 
-    cout << "Break summary: " << total << "\nSave break period? (yes/no) \n";
+    cout << "Break summary: " << minutes << " minutes and " << seconds << " seconds." << "\nSave break period? (yes/no) \n";
 
     string command;
     cin >> command;
@@ -215,6 +232,8 @@ int break_stop(){
         cout << "Break period not saved. \n";
         return 0;
     }
+
+    cout << "Break period saved. \n";
 
     ofstream saveTotal(".break_total.txt");
     saveTotal << total;
@@ -256,7 +275,7 @@ int end_calculator(){
 
     ifstream break_file(".break_total.txt");
 
-    int break_total;
+    long break_total = 0;
 
     break_file >> break_total;
 
@@ -268,6 +287,9 @@ int end_calculator(){
 
     break_file.close();
 
+    long break_total_mins = break_total / 60;
+    long break_total_sec = break_total % 60;
+
     cout << "Break Total: " << break_total;
 
     auto now = system_clock::now();
@@ -276,32 +298,43 @@ int end_calculator(){
 
     ifstream start_file(".start_state.txt");
 
-    long start_time, start_state;
+    long start_time = 0;
+    long start_state = 0;
     // Fetch the time stored in the start_temp.txt
     start_file >> start_state;
     start_file >> start_time;
 
     long elapsed = end_state - start_state;
-    long mins = elapsed / 60;
-    long hours = mins / 60;
+    long hours = elapsed / 3600;
+    long mins = elapsed % 60;
 
 
-    ofstream log_file("logged_times.csv", ios::app); // append mode
+    long total_work_time = elapsed - break_total;
+    long total_work_time_hours = total_work_time / 3600;
+    long total_work_time_mins = (total_work_time % 60) / 60;
+
+
+    ofstream log_file(active_log_file, ios::app); // append mode
 
     log_file << put_time(localtime(&end_state), "%Y-%m-%d")   << ","  // Date
              << put_time(localtime(&start_state), "%H:%M") << ","  // Start
              << put_time(localtime(&end_state), "%H:%M")        << ","  // End
-             << break_total                                        << ","  // Break Total
-             << hours                                              << "\n";// Total hours
+             << break_total_mins                                    << ","  // Break Total
+             << hours << ":" << mins                                              << "," // Total hours
+             << total_work_time_hours << ":" << total_work_time_mins << "\n";
 
     log_file.close();
-    day_started = false;
 
     return 0;
 
 
 }
 
+long calculate_total_break(long seconds){
+    
+
+
+}
 
 
 
