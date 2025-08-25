@@ -12,7 +12,7 @@ using namespace std::chrono;
 
 int break_start();
 int break_stop();
-int date_calculator();
+void get_current_worked();
 int start_calculator();
 int end_calculator();
 void manual_day_entry();

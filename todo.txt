@@ -1,0 +1,15 @@
+[] Add /r for the menu printout so it overwrites and wont stack
+[] Add option on "start" to select either "current time" or manually input time.
+[] Do failchecks on all inputs
+[] Add printout for what time is currently logged on input as "start" and "end" and add "Is this correct?" 
+[] Add function to modify the start / end time
+[] Add method to input custom end time (basically add start and end time manually)
+[] Expand this option to also include previous dates
+[] Add method to sort the csv file (maybe with script)
+[X] Add function to check "current hours worked"
+[X] Add check / confirmation for break when returned
+[] Make a function/script to save the logged_times.csv file before any operation on it.
+[]URGENT: Fix the method for checking if a day has started
+[] Fix hours and minutes in the csv log file
+[] Check bug for duplicate entries
+[] Fix so that the "current worked" wont print anything unless the file contains some data

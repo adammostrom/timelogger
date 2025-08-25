@@ -6,21 +6,22 @@ atomic<bool> day_started(false);
 
 int main(){
 
+    // SHow the current time worked on start
+    get_current_worked();
 
     int command;
-    cout << "Following commands available:\n 1.start \n 2.end \n 3.break \n 4.manual day entry \n Input a command: \n";
+    cout << "\rFollowing commands available:\n 1.start \n 2.end \n 3.break \n 4.manual day entry \n 5.Get current worked \n 6.Cancel \n Input a command: ";
     cin >> command;
-    
     
     switch(command) {
         case 1:
             start_calculator();
             break;
         case 2:
-            if(!day_started){
-                cout << "No day start has been initiated, run the 'manual day start command'\n";
+/*             if(!day_started){
+                cout << "\rNo day start has been initiated, run the 'manual day start command'\n";
                 main();
-            }
+            } */
             end_calculator();
             break;
         case 3:
@@ -30,12 +31,57 @@ int main(){
             // For cases when you forget to start the day logger.
             manual_day_entry();
             break;
+        case 5:
+            get_current_worked();
+            break;
+        case 6:
+            return 0;
         default:
-            cout << "Cancelled or no command given.";
+            cout << "\rCancelled or no command given.";
             break;
         }
 
     return 0;
+}
+
+bool check_day_started(){
+    ofstream start_state_file(".start_state.txt");
+
+}
+
+void get_current_worked(){
+
+    ifstream start_time_file(".start_state.txt");
+
+    time_t start_time;
+    time_t start_state;
+
+    start_time_file >> start_state;
+    start_time_file >> start_time;
+
+    start_time_file.close();
+
+    // Read from file
+    ifstream break_time_file(".break_total.txt");
+    time_t break_total;
+    break_time_file >> break_total;
+
+    int break_hours = break_total / 3600;
+    int break_minutes = (break_total % 3600) / 60;
+
+
+    time_t now = time(nullptr);
+    tm local_tm = *localtime(&now);
+
+    // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
+    int seconds = static_cast<int>(difftime(now,start_state)) - break_total;
+    int hours = seconds / 3600;
+    int minutes = (seconds % 3600) / 60;
+
+
+    cout << "\rStarted: " << put_time(localtime(&start_state), "%H:%M \n");
+    cout << "\rTotal time worked: "  << hours << " hours and "<< minutes << " minutes." << "\n";
+    cout << "\rBreak total: " << break_hours << ":" << break_minutes << "\n";
 }
 
 void manual_day_entry(){
@@ -101,8 +147,6 @@ void input_thread(){
 
 int break_start(){
 
-/*     auto now_f = system_clock::now();
-    time_t now_c = system_clock::to_time_t(now_f); // Now first */
     time_t now_c = get_current_time();
     ofstream file(".break_start.txt");
     
@@ -135,15 +179,16 @@ int break_start(){
 }
 
 int break_stop(){
-    ifstream ifile(".break_start.txt");
+    ifstream break_start_file(".break_start.txt");
 
     time_t start;
-    ifile >> start;
-    ifile.close();
+    break_start_file >> start;
+    break_start_file.close();
 
     //Calculate duration
-    auto now_s = system_clock::now();
-    time_t now_c = system_clock::to_time_t(now_s); // Now second
+/*     auto now_s = system_clock::now();
+    time_t now_c = system_clock::to_time_t(now_s); // Now second */
+    time_t now_c = get_current_time();
 
     // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
     int seconds = static_cast<int>(difftime(now_c,start));
@@ -159,6 +204,17 @@ int break_stop(){
     totalFile.close();
 
     total += seconds;
+
+    cout << "Break summary: " << total << "\nSave break period? (yes/no) \n";
+
+    string command;
+    cin >> command;
+
+
+    if(command == "no"){
+        cout << "Break period not saved. \n";
+        return 0;
+    }
 
     ofstream saveTotal(".break_total.txt");
     saveTotal << total;
@@ -239,6 +295,7 @@ int end_calculator(){
              << hours                                              << "\n";// Total hours
 
     log_file.close();
+    day_started = false;
 
     return 0;
 
@@ -246,23 +303,5 @@ int end_calculator(){
 }
 
 
-int date_calculator(){
-        // Get the timestamp for the current date and time
-/*     time_t timestamp;
-    time(&timestamp);
 
-        // Display the date and time represented by the timestamp
-    cout << ctime(&timestamp);
-    
-    ofstream log_file("logged_times.csv");
-
-
-
-
-
-    log_file << "date" << "," << "start" << ",\n";  // empty End column
-    log_file.close(); */
-
-    
-}
 
