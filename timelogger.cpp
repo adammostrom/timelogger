@@ -6,7 +6,7 @@ atomic<bool> quit(false);
 string csv_file = "logged_times.csv";
 string csv_testfile = "TEST_logged_times.csv";
 
-string active_log_file = csv_testfile;
+string active_log_file = csv_file;
 
 int main(){
 
@@ -49,7 +49,18 @@ int main(){
 }
 
 bool check_day_started(){
-    ofstream start_state_file(".start_state.txt");
+    ifstream start_state_file(".start_state.txt");
+
+    long temp = 0;
+
+    start_state_file >> temp;
+    start_state_file.close();
+
+    if (temp != 0){
+        return true;
+        
+    }
+    return false;
 
 }
 
@@ -59,8 +70,8 @@ void get_current_worked(){
 
     ifstream start_time_file(".start_state.txt");
 
-    time_t start_time;
-    time_t start_state;
+    time_t start_time = 0;
+    time_t start_state = 0;
 
     start_time_file >> start_state;
     start_time_file >> start_time;
@@ -83,10 +94,6 @@ void get_current_worked(){
         break_hours = 0;
         break_minutes = 0;
     }
-
-
- 
-
 
     time_t now = time(nullptr);
     tm local_tm = *localtime(&now);
@@ -221,8 +228,9 @@ int break_stop(){
     totalFile.close();
 
     total += seconds;
+    int remains = seconds % 60;
 
-    cout << "Break summary: " << minutes << " minutes and " << seconds << " seconds." << "\nSave break period? (yes/no) \n";
+    cout << "Break summary: " << minutes << " minutes and " << remains << " seconds." << "\nSave break period? (yes/no) \n";
 
     string command;
     cin >> command;
@@ -239,7 +247,7 @@ int break_stop(){
     saveTotal << total;
     saveTotal.close();
 
-    int remains = seconds % 60;
+
 
     cout << "Break ended. Duration: " << seconds << " seconds.\nWhich is: " << minutes << " minutes and " << remains << " seconds. \n";
 
@@ -249,6 +257,11 @@ int break_stop(){
 
 
 int start_calculator(){
+
+    if(check_day_started()){
+        cerr << "Day already started";
+        return 0;
+    }
 
     // Create the file
     auto now = system_clock::now();
