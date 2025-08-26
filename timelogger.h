@@ -25,3 +25,8 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
 bool confirm_logging(const string& record);
 void clear_temp_files();
 bool check_day_started();
+
+
+// GUI
+
+int test_gui(int argc, char **argv);
