@@ -8,13 +8,24 @@ string csv_testfile = "TEST_logged_times.csv";
 
 string active_log_file = csv_file;
 
+#define TESTING   // uncomment this when testing
+
+#ifdef TESTING
+string DATA_FILE = "TEST_logged_times.csv";
+#else
+string DATA_FILE = "logged_times.csv";
+#endif
+
 int main(){
 
+
     // SHow the current time worked on start
-    get_current_worked();
+    if(check_day_started()){
+        get_current_worked();
+    }
 
     int command;
-    cout << "\rFollowing commands available:\n 1.start \n 2.end \n 3.break \n 4.manual day entry \n 5.Get current worked \n 6.Cancel \n Input a command: ";
+    cout << "\rFollowing commands available:\n 1.start \n 2.end \n 3.break \n 4.manual day entry \n 5.Clear temporary files \n 6.Cancel \n Input a command: ";
     cin >> command;
     
     switch(command) {
@@ -36,7 +47,7 @@ int main(){
             manual_day_entry();
             break;
         case 5:
-            get_current_worked();
+            clear_temp_files();
             break;
         case 6:
             return 0;
@@ -103,10 +114,11 @@ void get_current_worked(){
     int hours = seconds / 3600;
     int minutes = (seconds % 3600) / 60;
 
-
-    cout << "\rStarted: " << put_time(localtime(&start_state), "%H:%M \n");
-    cout << "\rTotal time worked (break subtracted): "  << hours << " hours and "<< minutes << " minutes." << "\n";
-    cout << "\rBreak total: " << break_hours << ":" << break_minutes << "\n";
+    cout << "+---------------------------------------------------------------------------+ \n";
+    cout << "\r| Started: " << put_time(localtime(&start_state), "%H:%M \n");
+    cout << "\r| Total time worked (break subtracted): "  << hours << " hours and "<< minutes << " minutes." << "\n";
+    cout << "\r| Break total: " << break_hours << ":" << break_minutes << "\n";
+    cout << "+---------------------------------------------------------------------------+\n";
 }
 
 void manual_day_entry(){
@@ -279,6 +291,8 @@ int start_calculator(){
 
     start_file.close();
 
+    cout << "Day started! Time recorded: " << put_time(localtime(&now_c), "%H:%M \n");
+
     return 0;
 }
 
@@ -300,10 +314,9 @@ int end_calculator(){
 
     break_file.close();
 
-    long break_total_mins = break_total / 60;
-    long break_total_sec = break_total % 60;
+    long break_total_hour = calculate_hour_from_seconds(break_total);
+    long break_total_mins = calculate_mins_from_seconds(break_total);
 
-    cout << "Break Total: " << break_total;
 
     auto now = system_clock::now();
     time_t end_state = system_clock::to_time_t(now);
@@ -317,24 +330,31 @@ int end_calculator(){
     start_file >> start_state;
     start_file >> start_time;
 
+    // Work time (hours:mins)
     long elapsed = end_state - start_state;
-    long hours = elapsed / 3600;
-    long mins = elapsed % 60;
-
-
+    
+    // Total worked time (work time - break)
     long total_work_time = elapsed - break_total;
-    long total_work_time_hours = total_work_time / 3600;
-    long total_work_time_mins = (total_work_time % 60) / 60;
+
+    long worked_hours = calculate_hour_from_seconds(elapsed);
+    long worked_mins = calculate_mins_from_seconds(elapsed);
+
+    long total_work_time_hours = calculate_hour_from_seconds(total_work_time);
+    long total_work_time_mins = calculate_mins_from_seconds(total_work_time);
 
 
-    ofstream log_file(active_log_file, ios::app); // append mode
+    ofstream log_file(DATA_FILE, ios::app); // append mode
 
-    log_file << put_time(localtime(&end_state), "%Y-%m-%d")   << ","  // Date
-             << put_time(localtime(&start_state), "%H:%M") << ","  // Start
-             << put_time(localtime(&end_state), "%H:%M")        << ","  // End
-             << break_total_mins                                    << ","  // Break Total
-             << hours << ":" << mins                                              << "," // Total hours
-             << total_work_time_hours << ":" << total_work_time_mins << "\n";
+    string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins);
+
+    if(!confirm_logging(logging_record)) {
+        cout << "Record not stored! \n";
+        return 0;
+    }
+    cout << "Record stored. \n";
+    log_file << logging_record;
+    
+    clear_temp_files();
 
     log_file.close();
 
@@ -343,11 +363,71 @@ int end_calculator(){
 
 }
 
-long calculate_total_break(long seconds){
-    
+bool confirm_logging(const string& record){
+    cout << "NOTE: The following data will be written and stored: " << record
+         << "Save this record? (yes/no): \n";
+    string input;
+    cin >> input;
 
+    // For each character in the string, make it lower case.
+    for(auto&c : input) c = tolower(c);
 
+    return (input == "yes" || input == "y");
 }
 
+
+string format_record(time_t start_state, time_t end_state, long  break_total_hour,
+                     long break_total_mins, long worked_hours,
+                     long worked_mins, long total_work_time_hours, long total_work_time_mins) 
+{
+    ostringstream oss;
+    oss << put_time(localtime(&end_state), "%Y-%m-%d")          << ","  // Date
+        << put_time(localtime(&start_state), "%H:%M")           << ","  // Start
+        << put_time(localtime(&end_state), "%H:%M")             << ","  // End
+        << break_total_hour << ":" << break_total_mins          << ","  // Break Total
+        << worked_hours << ":" << worked_mins                   << "," // Total hours
+        << total_work_time_hours << ":" << total_work_time_mins << "\n";
+
+    return oss.str();
+}
+
+long calculate_hour_from_seconds(long seconds){
+    return seconds / 3600;
+}
+long calculate_mins_from_seconds(long seconds){
+    return (seconds % 60) / 60;
+}
+
+long read_from_file(const string& file){
+    ifstream file_to_read(file);
+    long data = 0;
+    if(file_to_read >> data){
+        cout << "Successfully read from file";
+    }
+    return data;
+}
+
+bool clear_file(const string& filename) {
+    ofstream file(filename, ios::trunc); // open in truncate mode
+}
+
+void clear_temp_files(){
+
+    cout << "Clear temporary files? Current data will be erased! (yes/no) \n";
+
+    string input;
+    cin >> input;
+
+    // For each character in the string, make it lower case.
+    for(auto&c : input) c = tolower(c);
+
+    if (input == "yes" || input == "y"){    
+        clear_file(".break_start.txt");
+        clear_file(".break_total.txt");
+        clear_file(".start_state.txt");
+
+        cout << "Temporary files cleared! \n";
+    }
+}
 
 

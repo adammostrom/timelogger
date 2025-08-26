@@ -20,3 +20,4 @@ commands:
 run:
 	@g++ timelogger.cpp -o timelogger;
 	@./timelogger
+

@@ -1,4 +1,4 @@
-date,start,end,break_:min,work_hour:mins,tot_hours
+date,start,end,break_hour:min,work_hour:min,tot_hour:min
 2025-08-25,20:06,20:06,0,0
 2025-08-25,20:10,20:10,3,0
 2025-08-25,20:19,20:19,00:00,0
@@ -14,3 +14,7 @@ date,start,end,break_:min,work_hour:mins,tot_hours
 2025-08-25,23:25,23:25,278532,0:6,-4642:0
 2025-08-25,23:26,23:26,0,0:3,0:0
 2025-08-25,23:26,23:27,0,0:3,0:0 <---- Bug 3 minutes work hour even tho it is supposed to be 1 at the most.
+2025-08-26,08:15,21:12,0,12:0,12:0
+2025-08-26,08:15,21:35,0:0,13:0,13:0
+2025-08-26,08:15,21:41,0:0,13:0,13:0
+2025-08-26,21:49,21:50,0:0,0:0,0:0
