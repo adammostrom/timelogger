@@ -384,9 +384,9 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
     oss << put_time(localtime(&end_state), "%Y-%m-%d")          << ","  // Date
         << put_time(localtime(&start_state), "%H:%M")           << ","  // Start
         << put_time(localtime(&end_state), "%H:%M")             << ","  // End
-        << break_total_hour << ":" << break_total_mins          << ","  // Break Total
-        << worked_hours << ":" << worked_mins                   << "," // Total hours
-        << total_work_time_hours << ":" << total_work_time_mins << "\n";
+        << break_total_hour << ":" << setw(2) << setfill('0') << break_total_mins          << ","  // Break Total
+        << worked_hours << ":" << setw(2) << setfill('0') << worked_mins << "," // Hours worked
+        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins;        // Total time
 
     return oss.str();
 }
