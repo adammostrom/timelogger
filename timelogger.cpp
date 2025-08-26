@@ -105,7 +105,7 @@ void get_current_worked(){
 
 
     cout << "\rStarted: " << put_time(localtime(&start_state), "%H:%M \n");
-    cout << "\rTotal time worked: "  << hours << " hours and "<< minutes << " minutes." << "\n";
+    cout << "\rTotal time worked (break subtracted): "  << hours << " hours and "<< minutes << " minutes." << "\n";
     cout << "\rBreak total: " << break_hours << ":" << break_minutes << "\n";
 }
 
@@ -259,7 +259,7 @@ int break_stop(){
 int start_calculator(){
 
     if(check_day_started()){
-        cerr << "Day already started";
+        cerr << "\rDay already started! \n";
         return 0;
     }
 

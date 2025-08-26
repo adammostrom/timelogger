@@ -1,5 +1,6 @@
 [] Add /r for the menu printout so it overwrites and wont stack
-[] Add option on "start" to select either "current time" or manually input time.
+[/] Add option on "start" to select either "current time" or manually input time.
+    - Added, optimise by adding box for printout and remove "current time check" and replace with other functionality
 [] Do failchecks on all inputs
 [] Add printout for what time is currently logged on input as "start" and "end" and add "Is this correct?" 
 [] Add function to modify the start / end time
@@ -13,3 +14,4 @@
 [] Fix hours and minutes in the csv log file
 [] Check bug for duplicate entries
 [] Fix so that the "current worked" wont print anything unless the file contains some data
+[] Calculate the break parameter in the CSV file to still be HH:MM and dicard second all together.
