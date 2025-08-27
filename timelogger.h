@@ -6,6 +6,8 @@
 #include <string>
 #include <thread>
 #include <atomic>
+#include <algorithm>
+#include <limits> // for numeric_limits<streamsize>::max()
 
 using namespace std;
 using namespace std::chrono;
@@ -25,6 +27,7 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
 bool confirm_logging(const string& record);
 void clear_temp_files();
 bool check_day_started();
+bool confirm(const string& message);
 
 
 // GUI

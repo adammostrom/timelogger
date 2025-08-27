@@ -1,0 +1,44 @@
+getline vs cin >>
+
+cin >> var → reads until the first whitespace (space, tab, newline).
+
+Good for single words or numbers.
+
+Leaves the newline \n in the buffer → which often causes the next getline to immediately return an empty string.
+
+getline(cin, var) → reads the entire line including spaces, until ENTER is pressed.
+
+Better for text input, menus, or when you want to handle an empty ENTER.
+
+Does not leave a dangling newline problem.
+
+👉 In your case (where ENTER alone should count as input), getline is the right tool.
+
+\n vs endl
+
+\n → just inserts a newline character.
+
+Faster, because it doesn’t force a flush of the output buffer.
+
+endl → inserts a newline and flushes the buffer.
+
+Safer for prompts (guarantees the text is on screen before user types).
+
+Slightly slower in loops if you use it a lot, but irrelevant in small programs.
+
+👉 For printing prompts (cout << "Enter option: " << endl;) → endl is safer, ensures the prompt is visible before waiting for input.
+👉 For regular output (cout << "Hello\n";) → \n is usually preferred, faster and cleaner.
+
+🔑 Rule of thumb
+
+User input prompts:
+
+getline for input.
+
+endl or cout.flush() after the prompt.
+
+Normal output / logs:
+
+\n is fine.
+
+Example (best practice for a prompt):

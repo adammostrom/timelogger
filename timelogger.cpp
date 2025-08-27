@@ -126,8 +126,8 @@ void get_current_worked(){
 
     // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
     int seconds = static_cast<int>(difftime(now,start_state)) - break_total;
-    int hours = seconds / 3600;
-    int minutes = (seconds % 3600) / 60;
+    int hours = calculate_hour_from_seconds(seconds);
+    int minutes = calculate_mins_from_seconds(seconds);
 
     cout << "+---------------------------------------------------------------------------+ \n";
     cout << "\r| Started: " << put_time(localtime(&start_state), "%H:%M \n");
@@ -166,12 +166,22 @@ void manual_day_entry(){
     state (unix time)
     time (hour:minutes, ex: 00:40)
     */
+
+    string input;
+    cout << "The time entered is: " << put_time(localtime(&started_time), "%H:%M ") << ". Is this correct? (yes/no) \n";
+    cin >> input;
+
+    // For each character in the string, make it lower case.
+    for(auto&c : input) c = tolower(c);
+
+    if(input != "yes" || input != "y"){
+        cout << "Start time not saved";
+        return;
+    }
+    
     start_file << started_time << "\n";
     start_file << put_time(localtime(&started_time), "%H:%M \n");
-
     start_file.close();
-
-    main();
 
 }
 
@@ -213,10 +223,11 @@ int break_start(){
     while (!quit) {
 
         time_t elapsed = time(nullptr) - now_c;  // seconds since break started
+        long hours = elapsed / 3600;
         int minutes = elapsed / 60;
         int seconds = elapsed % 60;
 
-        cout << "\rOn break: " << minutes << ":" 
+        cout << "\rOn break: " << hours << ":" << minutes << (seconds < 10 ? "0" : "")  << ":" 
         << (seconds < 10 ? "0" : "") << seconds << flush;
         total++;
         this_thread::sleep_for(chrono::milliseconds(1000));
@@ -235,14 +246,12 @@ int break_stop(){
     break_start_file >> start;
     break_start_file.close();
 
-    //Calculate duration
-/*     auto now_s = system_clock::now();
-    time_t now_c = system_clock::to_time_t(now_s); // Now second */
     time_t now_c = get_current_time();
 
     // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
-    int seconds = static_cast<int>(difftime(now_c,start));
-    int minutes = seconds / 60;
+    long seconds = static_cast<int>(difftime(now_c,start));
+    long hours = calculate_hour_from_seconds(seconds);
+    long minutes = calculate_mins_from_seconds(seconds);
 
     // Add to the total
     int total = 0;
@@ -256,7 +265,9 @@ int break_stop(){
     total += seconds;
     int remains = seconds % 60;
 
-    cout << "Break summary: " << minutes << " minutes and " << remains << " seconds." << "\nSave break period? (yes/no) \n";
+    
+
+    cout << "Break ended. Summary: " << hours << setw(2) << setfill('0') << " hours, " << minutes << setw(2) << setfill('0') << " minutes and " << remains << " seconds. \nSave break period? (yes/no) \n";
 
     string command;
     cin >> command;
@@ -272,10 +283,6 @@ int break_stop(){
     ofstream saveTotal(".break_total.txt");
     saveTotal << total;
     saveTotal.close();
-
-
-
-    cout << "Break ended. Duration: " << seconds << " seconds.\nWhich is: " << minutes << " minutes and " << remains << " seconds. \n";
 
     return 0;
 
@@ -346,6 +353,9 @@ int end_calculator(){
 
     // Work time (hours:mins)
     long elapsed = end_state - start_state;
+    if(elapsed < 0){
+        elapsed = 0;
+    }
     
     // Total worked time (work time - break)
     long total_work_time = elapsed - break_total;
@@ -361,7 +371,11 @@ int end_calculator(){
 
     string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins);
 
-    if(!confirm_logging(logging_record)) {
+
+    string message =  "NOTE: The following data will be written and stored: " + logging_record + "\n"
+         + "Save this record? (yes/no): \n";
+
+    if(!confirm(message)) {
         cout << "Record not stored! \n";
         return 0;
     }
@@ -377,19 +391,6 @@ int end_calculator(){
 
 }
 
-bool confirm_logging(const string& record){
-    cout << "NOTE: The following data will be written and stored: " << record
-         << "Save this record? (yes/no): \n";
-    string input;
-    cin >> input;
-
-    // For each character in the string, make it lower case.
-    for(auto&c : input) c = tolower(c);
-
-    return (input == "yes" || input == "y");
-}
-
-
 string format_record(time_t start_state, time_t end_state, long  break_total_hour,
                      long break_total_mins, long worked_hours,
                      long worked_mins, long total_work_time_hours, long total_work_time_mins) 
@@ -400,7 +401,7 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
         << put_time(localtime(&end_state), "%H:%M")             << ","  // End
         << break_total_hour << ":" << setw(2) << setfill('0') << break_total_mins          << ","  // Break Total
         << worked_hours << ":" << setw(2) << setfill('0') << worked_mins << "," // Hours worked
-        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins;        // Total time
+        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << "\n";        // Total time
 
     return oss.str();
 }
@@ -409,7 +410,7 @@ long calculate_hour_from_seconds(long seconds){
     return seconds / 3600;
 }
 long calculate_mins_from_seconds(long seconds){
-    return (seconds % 60) / 60;
+    return (seconds % 3600) / 60;
 }
 
 long read_from_file(const string& file){
@@ -427,21 +428,35 @@ bool clear_file(const string& filename) {
 
 void clear_temp_files(){
 
-    cout << "Clear temporary files? Current data will be erased! (yes/no) \n";
+    string message = "Clear temporary files? Current data will be erased!";
 
-    string input;
-    cin >> input;
-
-    // For each character in the string, make it lower case.
-    for(auto&c : input) c = tolower(c);
-
-    if (input == "yes" || input == "y"){    
+    if(confirm(message)){
         clear_file(".break_start.txt");
         clear_file(".break_total.txt");
         clear_file(".start_state.txt");
 
         cout << "Temporary files cleared! \n";
+
+        return;
     }
+    cout << "Temporary files not cleared! \n";
+}
+
+bool confirm(const string& message) {
+    cout << message << " (yes/ENTER to accept, no to cancel): \n";
+
+    string input;
+    //cin.ignore(numeric_limits<streamsize>::max(), '\n');  
+    //getline(cin, input);
+
+    cin >> input;
+    // lowercase input
+    transform(input.begin(), input.end(), input.begin(), ::tolower);
+
+    if (input == "yes" || input == "y") {
+        return true; // accepted
+    }
+    return false; // anything else = reject
 }
 
 
