@@ -1,6 +1,6 @@
 #include "timelogger.h"
 
-#include "gui.h"
+//#include "gui.h"
 
 
 atomic<bool> quit(false);
@@ -17,18 +17,21 @@ string DATA_FILE = "TEST_logged_times.csv";
 #else
 string DATA_FILE = "logged_times.csv";
 #endif
-int test_gui(int argc, char **argv){
+
+
+
+/* int test_gui(int argc, char **argv){
     GUI gui(250, 100, "Timer App");
     gui.button->callback([](Fl_Widget*, void*){
         cout << "Start clicked! " << endl;
     });
     gui.show(argc, argv);
     return Fl::run();
-}
+} */
 
-int main(int argc, char **argv){
+int main(){
 
-    test_gui(argc, argv);
+    //test_gui(argc, argv);
 
     // SHow the current time worked on start
     if(check_day_started()){
