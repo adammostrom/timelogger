@@ -11,7 +11,7 @@ string csv_testfile = "TEST_logged_times.csv";
 
 string active_log_file = csv_file;
 
-#define TESTING   // uncomment this when testing
+//#define TESTING   // uncomment this when testing
 
 #ifdef TESTING
 string DATA_FILE = "TEST_logged_times.csv";
