@@ -19,7 +19,8 @@ string DATA_FILE = "TEST_logged_times.csv";
 string DATA_FILE = "logged_times.csv";
 #endif
 
-
+// ofstream = write data to file
+// ifstream = read data from file
 
 /* int test_gui(int argc, char **argv){
     GUI gui(250, 100, "Timer App");
@@ -32,9 +33,7 @@ string DATA_FILE = "logged_times.csv";
 
 int main(){
 
-    //test_gui(argc, argv);
-
-    // SHow the current time worked on start
+    // Show the current time worked on start
     if(check_day_started()){
         get_current_worked();
     }
@@ -48,17 +47,12 @@ int main(){
             start_calculator();
             break;
         case 2:
-/*             if(!day_started){
-                cout << "\rNo day start has been initiated, run the 'manual day start command'\n";
-                main();
-            } */
             end_calculator();
             break;
         case 3:
             break_start();
             break;
         case 4:
-            // For cases when you forget to start the day logger.
             manual_day_entry();
             break;
         case 5:
@@ -66,6 +60,10 @@ int main(){
             break;
         case 6:
             return 0;
+        case 7:
+            manual_break_entry();
+            break;
+        
         default:
             cout << "\rCancelled or no command given.";
             break;
@@ -77,22 +75,46 @@ int main(){
 bool check_day_started(){
     ifstream start_state_file(".start_state.txt");
 
+    if(!start_state_file){
+        return false;
+    }
+
     long temp = 0;
 
     start_state_file >> temp;
     start_state_file.close();
 
-    if (temp != 0){
-        return true;
+    if (temp == 0){
+        return false;
         
     }
-    return false;
+    return true;
 
 }
 
+tuple <time_t, time_t> get_started_time(){
+    ifstream start_time_file(".start_state.txt");
+    tuple<time_t, time_t> day_started;
+    if(start_time_file){
+        time_t start_time = 0;
+        time_t start_state = 0;
 
+        start_time_file >> start_state;
+        start_time_file >> start_time;
+
+        start_time_file.close();
+        
+        auto day_started = make_tuple(start_state, start_time);
+        return day_started;
+    }
+}
 
 void get_current_worked(){
+
+    if(!check_day_started()){
+        cout << "Day not started" << endl;
+        return;
+    }
 
     ifstream start_time_file(".start_state.txt");
 
@@ -113,16 +135,11 @@ void get_current_worked(){
         
     };
 
-    int break_hours = break_total / 3600;
-    int break_minutes = (break_total % 3600) / 60;
+    int break_hours = calculate_hour_from_seconds(break_total);
+    int break_minutes = calculate_mins_from_seconds(break_total);
 
-    if (!break_time_file) {
-        break_hours = 0;
-        break_minutes = 0;
-    }
 
-    time_t now = time(nullptr);
-    tm local_tm = *localtime(&now);
+    time_t now = get_current_time();
 
     // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
     int seconds = static_cast<int>(difftime(now,start_state)) - break_total;
@@ -138,15 +155,31 @@ void get_current_worked(){
 
 void manual_day_entry(){
 
-    cout << "Input the time the day started with format: HH:MM \n";
+    if(check_day_started()){
+        cout << "Warning. Day already logged as started. Proceeding will overwrite.\n";
+    }
+
+    int hh = 00;
+    int mm = 00;
+    char colon = ':';
     string hhmm;
+    
+    cout << "Input the time the day started with format: HH:MM \n";
     cin >> hhmm;
-    int hh, mm;
-    char colon;
 
     stringstream ss(hhmm);
     ss >> hh >> colon >> mm;
 
+    if( hh < 00 || hh > 24){
+        cout << "Wrong hour format: " << hh << "\n";
+        return;
+    }
+    if(mm < 0 || mm > 60){
+        cout << "Wrong minute format: " << mm << "\n";
+        return;
+    }
+
+    cout << "SHOULD NOT PRINT";
     // get today's date
     time_t now = time(nullptr);
     tm local_tm = *localtime(&now);
@@ -161,20 +194,9 @@ void manual_day_entry(){
 
     ofstream start_file(".start_state.txt"); 
 
-    /*
-    Write the file as: 
-    state (unix time)
-    time (hour:minutes, ex: 00:40)
-    */
+    string message = "The time entered is: " + to_string(hh) + ":" + to_string(mm) + ". \n";
 
-    string input;
-    cout << "The time entered is: " << put_time(localtime(&started_time), "%H:%M ") << ". Is this correct? (yes/no) \n";
-    cin >> input;
-
-    // For each character in the string, make it lower case.
-    for(auto&c : input) c = tolower(c);
-
-    if(input != "yes" || input != "y"){
+    if(!confirm(message)){
         cout << "Start time not saved";
         return;
     }
@@ -185,6 +207,60 @@ void manual_day_entry(){
 
 }
 
+
+
+void manual_break_entry(){
+
+    if(check_day_started()){
+        cout << "Warning. Day already logged as started. Proceeding will overwrite.\n";
+    }
+
+    int hh = 00;
+    int mm = 00;
+    char colon = ':';
+    string hhmm;
+    
+    cout << "Input the time the day started with format: HH:MM \n";
+    cin >> hhmm;
+
+    stringstream ss(hhmm);
+    ss >> hh >> colon >> mm;
+
+    if( hh < 00 || hh > 24){
+        cout << "Wrong hour format: " << hh << "\n";
+        return;
+    }
+    if(mm < 0 || mm > 60){
+        cout << "Wrong minute format: " << mm << "\n";
+        return;
+    }
+
+    cout << "SHOULD NOT PRINT";
+    // get today's date
+    time_t now = time(nullptr);
+    tm local_tm = *localtime(&now);
+
+    // overwrite hour/minute/second
+    local_tm.tm_hour = hh;
+    local_tm.tm_min = mm;
+    local_tm.tm_sec = 0;
+
+    // convert to epoch seconds
+    time_t start_break_time = mktime(&local_tm);
+
+    ofstream start_file(".break_total.txt"); 
+
+    string message = "The time entered is: " + to_string(hh) + ":" + to_string(mm) + ". \n";
+
+    if(!confirm(message)){
+        cout << "Start time not saved";
+        return;
+    }
+    
+    start_file << start_break_time;
+    start_file.close();
+
+}
 
 time_t get_current_time(){
     auto now_f = system_clock::now();
@@ -407,9 +483,15 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
 }
 
 long calculate_hour_from_seconds(long seconds){
+    if(seconds <= 0){
+        return 0;
+    }
     return seconds / 3600;
 }
 long calculate_mins_from_seconds(long seconds){
+    if(seconds <= 0){
+        return 0;
+    }
     return (seconds % 3600) / 60;
 }
 
@@ -443,7 +525,7 @@ void clear_temp_files(){
 }
 
 bool confirm(const string& message) {
-    cout << message << " (yes/ENTER to accept, no to cancel): \n";
+    cout << message << "(yes/ENTER to accept, no to cancel): \n";
 
     string input;
     //cin.ignore(numeric_limits<streamsize>::max(), '\n');  

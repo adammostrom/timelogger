@@ -8,6 +8,7 @@
 #include <atomic>
 #include <algorithm>
 #include <limits> // for numeric_limits<streamsize>::max()
+#include <tuple> // Required for std::tuple
 
 using namespace std;
 using namespace std::chrono;
@@ -15,6 +16,7 @@ using namespace std::chrono;
 int break_start();
 int break_stop();
 void get_current_worked();
+time_t get_current_time();
 int start_calculator();
 int end_calculator();
 void manual_day_entry();
@@ -30,6 +32,13 @@ bool check_day_started();
 bool confirm(const string& message);
 
 
+void manual_break_entry();
+
+
+
+// WIP
+
+tuple<time_t, time_t> get_started_time();
 // GUI
 
 int test_gui(int argc, char **argv);
