@@ -39,7 +39,7 @@ int main(){
     }
 
     int command;
-    cout << "\rFollowing commands available:\n 1.Start \n 2.End \n 3.Break \n 4.Manual day entry \n 5.Clear temporary files \n 6.Cancel \n Input a command: ";
+    cout << "\rFollowing commands available:\n 1.Start \n 2.End \n 3.Break \n 4.Manual day entry \n 5.Clear temporary files \n 6.Manual break entry \n 7. Cancel \n Input a command: ";
     cin >> command;
     
     switch(command) {
@@ -59,10 +59,10 @@ int main(){
             clear_temp_files();
             break;
         case 6:
-            return 0;
-        case 7:
             manual_break_entry();
             break;
+        case 7:
+            return 0;
         
         default:
             cout << "\rCancelled or no command given.";
@@ -207,58 +207,76 @@ void manual_day_entry(){
 
 }
 
-
-
-void manual_break_entry(){
-
-    if(check_day_started()){
-        cout << "Warning. Day already logged as started. Proceeding will overwrite.\n";
-    }
-
+tuple<int, int> parse_entry(){
     int hh = 00;
     int mm = 00;
     char colon = ':';
     string hhmm;
     
-    cout << "Input the time the day started with format: HH:MM \n";
+    cout << "Input with format: HH:MM \n";
     cin >> hhmm;
 
     stringstream ss(hhmm);
     ss >> hh >> colon >> mm;
 
-    if( hh < 00 || hh > 24){
-        cout << "Wrong hour format: " << hh << "\n";
-        return;
+/*     if (!(ss >> hh >> colon >> mm) || colon != ':') {
+        throw runtime_error("Invalid format, expected HH:MM");
+    } */
+    if (hh < 0 || hh > 23) {
+        throw runtime_error("Hour must be 0–23");
     }
-    if(mm < 0 || mm > 60){
-        cout << "Wrong minute format: " << mm << "\n";
-        return;
+    if (mm < 0 || mm > 59) {
+        throw runtime_error("Minute must be 0–59");
     }
 
-    cout << "SHOULD NOT PRINT";
-    // get today's date
-    time_t now = time(nullptr);
-    tm local_tm = *localtime(&now);
+    return make_tuple(hh, mm);
+}
 
-    // overwrite hour/minute/second
-    local_tm.tm_hour = hh;
-    local_tm.tm_min = mm;
-    local_tm.tm_sec = 0;
+// Read the epoch time (seconds) from a file.
+long read_from_file(const string &filename){
+    ifstream file(filename);
 
-    // convert to epoch seconds
-    time_t start_break_time = mktime(&local_tm);
+    long tot = 0;
+    if(file.is_open()){
+        file >> tot;
+    }
+    file.close();
+    return tot;
 
-    ofstream start_file(".break_total.txt"); 
+}
+
+void save_to_file(const string &filename, int tot){
+    
+    ofstream file(filename);
+    if(!file){
+        throw runtime_error("Could not open file for writing");
+    }
+    file << tot;
+    file.close();
+}
+
+void manual_break_entry(){
+
+    tuple <int, int> hhmm = parse_entry();
+
+    long hh = get<0>(hhmm);
+    long mm = get<1>(hhmm);
+
+
+    long secs = calculate_secs_from_hour_min(hh,mm);
+
+    long tot = read_from_file(".break_total.txt");
+
+    tot += secs;
 
     string message = "The time entered is: " + to_string(hh) + ":" + to_string(mm) + ". \n";
 
     if(!confirm(message)){
-        cout << "Start time not saved";
+        cout << "Break time not saved\n";
         return;
-    }
+    } 
     
-    start_file << start_break_time;
-    start_file.close();
+    save_to_file(".break_total.txt", tot);
 
 }
 
@@ -449,14 +467,15 @@ int end_calculator(){
 
 
     string message =  "NOTE: The following data will be written and stored: " + logging_record + "\n"
-         + "Save this record? (yes/no): \n";
+         + "Save this record?\n";
 
-    if(!confirm(message)) {
+    if(confirm(message)) {
+        cout << "Record stored. \n";
+        log_file << logging_record;
+    } else {
         cout << "Record not stored! \n";
-        return 0;
     }
-    cout << "Record stored. \n";
-    log_file << logging_record;
+
     
     clear_temp_files();
 
@@ -495,14 +514,6 @@ long calculate_mins_from_seconds(long seconds){
     return (seconds % 3600) / 60;
 }
 
-long read_from_file(const string& file){
-    ifstream file_to_read(file);
-    long data = 0;
-    if(file_to_read >> data){
-        cout << "Successfully read from file";
-    }
-    return data;
-}
 
 bool clear_file(const string& filename) {
     ofstream file(filename, ios::trunc); // open in truncate mode
@@ -542,3 +553,7 @@ bool confirm(const string& message) {
 }
 
 
+// Right now the user has to just input the total amount of break time to manually add
+int calculate_secs_from_hour_min(int hour, int min){
+    return (min * 60) + (hour * 3600);
+}

@@ -34,6 +34,16 @@ bool confirm(const string& message);
 
 void manual_break_entry();
 
+bool is_manual_format_ok(int hh, int mm);
+
+int calculate_secs_from_hour_min(int hh,int mm);
+
+
+long read_from_file(const string &filename);
+
+void save_to_file(const string &filename, int tot);
+
+void manual_break_entry();
 
 
 // WIP

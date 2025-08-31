@@ -14,7 +14,10 @@
 [] Make a function/script to save the logged_times.csv file before any operation on it.
 [X] URGENT: Fix the method for checking if a day has started
 [X] Fix hours and minutes in the csv log file
-[] Check bug for duplicate entries
-[] Fix so that the "current worked" wont print anything unless the file contains some data
+[X] Check bug for duplicate entries
+[/] Fix so that the "current worked" wont print anything unless the file contains some data
+    - Only prints when day is started
 [] Calculate the break parameter in the CSV file to still be HH:MM and dicard second all together.
 [] Start refactoring all cin and \n into getline and endl instead. (Better for text outputs)
+[] IMPORTANT: Implement safe writing to CSV file (never write to actual file!)
+[X] Add function to manually set / add a break period
