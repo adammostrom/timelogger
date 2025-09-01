@@ -153,7 +153,7 @@ void get_current_worked(){
     cout << "+---------------------------------------------------------------------------+ \n";
     cout << "\r| Started: " << put_time(localtime(&start_state), "%H:%M \n");
     cout << "\r| Total time worked (break subtracted): "  << hours << " hours and "<< minutes << " minutes." << "\n";
-    cout << "\r| Break total: " << break_hours << ":" << break_minutes << "\n";
+    cout << "\r| Break total: " << (break_hours < 10 ? "0" : "") << break_hours << ":" << (break_minutes < 10 ? "0" : "") <<  break_minutes << "\n";
     cout << "+---------------------------------------------------------------------------+\n";
 }
 
@@ -379,7 +379,7 @@ int break_start(){
         int seconds = elapsed % 60;
 
         cout << "\rOn break: " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << ":" 
-        << (seconds < 10 ? "0" : "") << seconds << "\n"<< flush;
+        << (seconds < 10 ? "0" : "") << seconds << "   >" << flush;
 
         total++;
         this_thread::sleep_for(chrono::milliseconds(1000));
@@ -489,7 +489,7 @@ void save_to_log(){
     long break_total_mins = calculate_mins_from_seconds(break_total);
 
     tuple<int, int> break_hhmm = read_epoch_secs_convert_to_hhmm(".break_total.txt");
-    
+
 
     long end_state = read_from_file(".end_state.txt");
     
