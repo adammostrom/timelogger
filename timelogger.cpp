@@ -39,7 +39,7 @@ int main(){
     }
 
     int command;
-    cout << "\rFollowing commands available:\n 1.Start \n 2.End \n 3.Break \n 4.Manual day entry \n 5.Clear temporary files \n 6.Manual break entry \n 7. Cancel \n Input a command: ";
+    cout << "\rFollowing commands available:\n 1.Start \n 2.End \n 3.Break \n 4.Manual day entry \n 5.Clear temporary files \n 6.Manual break entry \n 7.Manual end entry.\n 8.Cancel \nInput a command: ";
     cin >> command;
     
     switch(command) {
@@ -62,8 +62,10 @@ int main(){
             manual_break_entry();
             break;
         case 7:
+            manual_end_entry();
+            break;
+        case 8:
             return 0;
-        
         default:
             cout << "\rCancelled or no command given.";
             break;
@@ -77,6 +79,7 @@ bool check_day_started(){
 
     if(!start_state_file){
         return false;
+
     }
 
     long temp = 0;
@@ -85,6 +88,7 @@ bool check_day_started(){
     start_state_file.close();
 
     if (temp == 0){
+
         return false;
         
     }
@@ -179,7 +183,6 @@ void manual_day_entry(){
         return;
     }
 
-    cout << "SHOULD NOT PRINT";
     // get today's date
     time_t now = time(nullptr);
     tm local_tm = *localtime(&now);
@@ -205,6 +208,60 @@ void manual_day_entry(){
     start_file << put_time(localtime(&started_time), "%H:%M \n");
     start_file.close();
 
+}
+
+void manual_end_entry(){
+    if(!check_day_started()){
+        throw runtime_error("Day not started. Cannot end non-started day.\n");
+    }
+
+    // Get the break period
+    long break_total = read_from_file(".break_total.txt");
+
+    // Convert the break seconds into hours and minutes
+    long break_total_hour = calculate_hour_from_seconds(break_total);
+    long break_total_mins = calculate_mins_from_seconds(break_total);
+
+    // Read the manual entry from user
+    tuple<int, int> hhmm = parse_entry();
+
+        // get today's date
+    time_t now = time(nullptr);
+    tm local_tm = *localtime(&now);
+
+    // overwrite hour/minute/second
+    local_tm.tm_hour = get<0>(hhmm);
+    local_tm.tm_min = get<1>(hhmm);
+    local_tm.tm_sec = 0;
+
+    // convert to epoch seconds
+    time_t ended_time = mktime(&local_tm);
+
+    string message = "The time entered is: " + to_string(get<0>(hhmm)) + ":" + to_string(get<1>(hhmm)) + ". \n";
+
+    if(!confirm(message)){
+        cout << "End time not saved";
+        return;
+    }
+
+    save_to_file(".end_state.txt", ended_time);
+    save_to_log();
+}
+
+tuple<int, int> read_epoch_secs_convert_to_hhmm(const string &filename){
+    ifstream file(filename);
+
+    time_t epoch = 0;
+
+    file >> epoch;
+
+    struct tm *timeinfo = localtime(&epoch); // convert to local time
+
+    // Convert to hour and minute
+    int hour = timeinfo->tm_hour;
+    int minute = timeinfo->tm_min;
+
+    return make_tuple(hour, minute);
 }
 
 tuple<int, int> parse_entry(){
@@ -413,38 +470,32 @@ int start_calculator(){
 }
 
 int end_calculator(){
+    
+    auto now = system_clock::now();
+    time_t end_state = system_clock::to_time_t(now);
 
+    save_to_file(".end_state.txt", end_state);
+
+    save_to_log();
+
+}
+
+void save_to_log(){
     // Extract the break first:
 
-    ifstream break_file(".break_total.txt");
-
-    long break_total = 0;
-
-    break_file >> break_total;
-
-        // Step 2: clear the file (truncate to 0 length)
-    {
-        ofstream out(".break_total.txt", ios::trunc);
-        // file is now empty
-    }
-
-    break_file.close();
+    long break_total = read_from_file(".break_total.txt");
 
     long break_total_hour = calculate_hour_from_seconds(break_total);
     long break_total_mins = calculate_mins_from_seconds(break_total);
 
+    tuple<int, int> break_hhmm = read_epoch_secs_convert_to_hhmm(".break_total.txt");
+    
 
-    auto now = system_clock::now();
-    time_t end_state = system_clock::to_time_t(now);
-
-
-    ifstream start_file(".start_state.txt");
-
-    long start_time = 0;
-    long start_state = 0;
-    // Fetch the time stored in the start_temp.txt
-    start_file >> start_state;
-    start_file >> start_time;
+    long end_state = read_from_file(".end_state.txt");
+    
+    long start_state = read_from_file(".start_state.txt");
+    
+    tuple<int, int> hhmm = read_epoch_secs_convert_to_hhmm(".start_state.txt");
 
     // Work time (hours:mins)
     long elapsed = end_state - start_state;
@@ -482,9 +533,7 @@ int end_calculator(){
 
     log_file.close();
 
-    return 0;
-
-
+    return;
 }
 
 string format_record(time_t start_state, time_t end_state, long  break_total_hour,
@@ -528,6 +577,7 @@ void clear_temp_files(){
         clear_file(".break_start.txt");
         clear_file(".break_total.txt");
         clear_file(".start_state.txt");
+        clear_file(".end_state.txt");
 
         cout << "Temporary files cleared! \n";
 
