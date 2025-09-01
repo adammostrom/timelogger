@@ -321,8 +321,9 @@ int break_start(){
         int minutes = elapsed / 60;
         int seconds = elapsed % 60;
 
-        cout << "\rOn break: " << hours << ":" << minutes << (seconds < 10 ? "0" : "")  << ":" 
-        << (seconds < 10 ? "0" : "") << seconds << flush;
+        cout << "\rOn break: " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << ":" 
+        << (seconds < 10 ? "0" : "") << seconds << "\n"<< flush;
+
         total++;
         this_thread::sleep_for(chrono::milliseconds(1000));
 
