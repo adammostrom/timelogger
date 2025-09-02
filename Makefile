@@ -18,7 +18,7 @@ commands:
 	@cat Makefile
 
 run:
-	@g++ timelogger.cpp -o timelogger;
+	@g++ timelogger.cpp utils.cpp -o timelogger;
 	@./timelogger
 
 gui:

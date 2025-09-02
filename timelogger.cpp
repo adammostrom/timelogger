@@ -1,4 +1,5 @@
 #include "timelogger.h"
+#include "utils.h"
 
 //#include "gui.h"
 // #include "gui.h"
@@ -39,9 +40,46 @@ int main(){
     }
 
     int command;
-    cout << "\rFollowing commands available:\n 1.Start \n 2.End \n 3.Break \n 4.Manual day entry \n 5.Clear temporary files \n 6.Manual break entry \n 7.Manual end entry.\n 8.Cancel \nInput a command: ";
-    cin >> command;
-    
+    char input;
+    cout << "\rFollowing commands available:\n " 
+         //<< "> TIME TRACKING: \n"
+         << "1. Start  (s) \n "
+         << "2. End    (e) \n "
+         << "3. Break  (b) \n "
+         //<< "MANUAL ENTRY: \n"
+         << "4. Manual day entry   (md) \n "
+         << "5. Manual break entry (mb) \n "
+         << "6. Manual end entry   (me) \n "
+         //<< "MAINTENANCE: \n"
+         << "7. Clear temporary files  (cl) \n "
+         << "8. Cancel                 (c)  \n "
+         << "Input a command: \n ";
+    cin >> input;
+
+    if(input == '1' || input == 's' ){
+        command = 1;
+    }
+    if(input == '2' || input == 'e' ){
+        command = 2;
+    }
+    if(input == '3' || input == 'b' ){
+        command = 3;
+    }
+    if(input == '4' || input == 'md' ){
+        command = 4;
+    }
+    if(input == '5' || input == 'mb' ){
+        command = 5;
+    }
+    if(input == '6' || input == 'me' ){
+        command = 6;
+    }
+
+    switch_command(command);
+}
+
+int switch_command(const int &command){
+        
     switch(command) {
         case 1:
             start_calculator();
@@ -70,8 +108,6 @@ int main(){
             cout << "\rCancelled or no command given.";
             break;
         }
-
-    return 0;
 }
 
 bool check_day_started(){
@@ -95,7 +131,7 @@ bool check_day_started(){
     return true;
 
 }
-
+/* 
 tuple <time_t, time_t> get_started_time(){
     ifstream start_time_file(".start_state.txt");
     tuple<time_t, time_t> day_started;
@@ -111,7 +147,8 @@ tuple <time_t, time_t> get_started_time(){
         auto day_started = make_tuple(start_state, start_time);
         return day_started;
     }
-}
+    return
+} */
 
 void get_current_worked(){
 
@@ -139,16 +176,16 @@ void get_current_worked(){
         
     };
 
-    int break_hours = calculate_hour_from_seconds(break_total);
-    int break_minutes = calculate_mins_from_seconds(break_total);
+    long break_hours = calculate_hour_from_seconds(break_total);
+    long break_minutes = calculate_mins_from_seconds(break_total);
 
 
     time_t now = get_current_time();
 
     // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
-    int seconds = static_cast<int>(difftime(now,start_state)) - break_total;
-    int hours = calculate_hour_from_seconds(seconds);
-    int minutes = calculate_mins_from_seconds(seconds);
+    long seconds = static_cast<int>(difftime(now,start_state)) - break_total;
+    long hours = calculate_hour_from_seconds(seconds);
+    long minutes = calculate_mins_from_seconds(seconds);
 
     cout << "+---------------------------------------------------------------------------+ \n";
     cout << "\r| Started: " << put_time(localtime(&start_state), "%H:%M \n");
@@ -157,75 +194,14 @@ void get_current_worked(){
     cout << "+---------------------------------------------------------------------------+\n";
 }
 
-void manual_day_entry(){
-
+void manual_entry(const string &filename){
     if(check_day_started()){
         cout << "Warning. Day already logged as started. Proceeding will overwrite.\n";
     }
 
-    int hh = 00;
-    int mm = 00;
-    char colon = ':';
-    string hhmm;
-    
-    cout << "Input the time the day started with format: HH:MM \n";
-    cin >> hhmm;
-
-    stringstream ss(hhmm);
-    ss >> hh >> colon >> mm;
-
-    if( hh < 00 || hh > 24){
-        cout << "Wrong hour format: " << hh << "\n";
-        return;
-    }
-    if(mm < 0 || mm > 60){
-        cout << "Wrong minute format: " << mm << "\n";
-        return;
-    }
-
-    // get today's date
-    time_t now = time(nullptr);
-    tm local_tm = *localtime(&now);
-
-    // overwrite hour/minute/second
-    local_tm.tm_hour = hh;
-    local_tm.tm_min = mm;
-    local_tm.tm_sec = 0;
-
-    // convert to epoch seconds
-    time_t started_time = mktime(&local_tm);
-
-    ofstream start_file(".start_state.txt"); 
-
-    string message = "The time entered is: " + to_string(hh) + ":" + to_string(mm) + ". \n";
-
-    if(!confirm(message)){
-        cout << "Start time not saved";
-        return;
-    }
-    
-    start_file << started_time << "\n";
-    start_file << put_time(localtime(&started_time), "%H:%M \n");
-    start_file.close();
-
-}
-
-void manual_end_entry(){
-    if(!check_day_started()){
-        throw runtime_error("Day not started. Cannot end non-started day.\n");
-    }
-
-    // Get the break period
-    long break_total = read_from_file(".break_total.txt");
-
-    // Convert the break seconds into hours and minutes
-    long break_total_hour = calculate_hour_from_seconds(break_total);
-    long break_total_mins = calculate_mins_from_seconds(break_total);
-
-    // Read the manual entry from user
     tuple<int, int> hhmm = parse_entry();
 
-        // get today's date
+    // get today's date
     time_t now = time(nullptr);
     tm local_tm = *localtime(&now);
 
@@ -235,16 +211,36 @@ void manual_end_entry(){
     local_tm.tm_sec = 0;
 
     // convert to epoch seconds
-    time_t ended_time = mktime(&local_tm);
+    time_t started_time = mktime(&local_tm);
+
+    ofstream start_file(filename); 
 
     string message = "The time entered is: " + to_string(get<0>(hhmm)) + ":" + to_string(get<1>(hhmm)) + ". \n";
 
     if(!confirm(message)){
-        cout << "End time not saved";
+        cout << "Input not saved";
         return;
     }
 
-    save_to_file(".end_state.txt", ended_time);
+    save_to_file(".start_state.txt", started_time);
+}
+
+void manual_day_entry(){
+
+    if(check_day_started()){
+        cout << "Warning. Day already logged as started. Proceeding will overwrite.\n";
+    }
+
+    manual_entry(".start_state.txt");
+
+}
+
+void manual_end_entry(){
+    if(!check_day_started()){
+        throw runtime_error("Day not started. Cannot end non-started day.\n");
+    }
+
+    manual_entry(".end_state.txt");
     save_to_log();
 }
 
@@ -359,11 +355,13 @@ void input_thread(){
 int break_start(){
 
     time_t now_c = get_current_time();
-    ofstream file(".break_start.txt");
+/*     ofstream file(".break_start.txt");
     
     // Store it as unix timestamp
     file << now_c;
-    file.close();
+    file.close(); */
+
+    save_to_file(".break_start.txt", now_c);
 
     thread t(input_thread); // Create thread that checks for input.
 
@@ -374,8 +372,8 @@ int break_start(){
     while (!quit) {
 
         time_t elapsed = time(nullptr) - now_c;  // seconds since break started
-        long hours = elapsed / 3600;
-        int minutes = elapsed / 60;
+        long hours = calculate_hour_from_seconds(elapsed);
+        int minutes = calculate_mins_from_seconds(elapsed);
         int seconds = elapsed % 60;
 
         cout << "\rOn break: " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << ":" 
@@ -448,9 +446,7 @@ int start_calculator(){
         return 0;
     }
 
-    // Create the file
-    auto now = system_clock::now();
-    time_t now_c = system_clock::to_time_t(now); // Now first
+    time_t now_c = get_current_time();
 
     ofstream start_file(".start_state.txt"); 
 
@@ -460,7 +456,7 @@ int start_calculator(){
     time (hour:minutes, ex: 00:40)
     */
     start_file << now_c << "\n";
-    start_file << put_time(localtime(&now_c), "%H:%M \n");
+    //start_file << put_time(localtime(&now_c), "%H:%M \n");
 
     start_file.close();
 
@@ -469,7 +465,11 @@ int start_calculator(){
     return 0;
 }
 
-int end_calculator(){
+void end_calculator(){
+    if(!check_day_started()){
+        throw runtime_error("Day not started, cannot end time \n"); 
+        return;
+    }
     
     auto now = system_clock::now();
     time_t end_state = system_clock::to_time_t(now);
@@ -551,21 +551,7 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
     return oss.str();
 }
 
-long calculate_hour_from_seconds(long seconds){
-    if(seconds <= 0){
-        return 0;
-    }
-    return seconds / 3600;
-}
-long calculate_mins_from_seconds(long seconds){
-    if(seconds <= 0){
-        return 0;
-    }
-    return (seconds % 3600) / 60;
-}
-
-
-bool clear_file(const string& filename) {
+void clear_file(const string& filename) {
     ofstream file(filename, ios::trunc); // open in truncate mode
 }
 
@@ -601,10 +587,4 @@ bool confirm(const string& message) {
         return true; // accepted
     }
     return false; // anything else = reject
-}
-
-
-// Right now the user has to just input the total amount of break time to manually add
-int calculate_secs_from_hour_min(int hour, int min){
-    return (min * 60) + (hour * 3600);
 }
