@@ -1,4 +1,4 @@
-.PHONY: clean, build, gui, log, commands, run
+.PHONY: clean, build, gui, log, commands, run, test, study
 
 # @ = Hides the command from the output
 # - = Wont print if there are any errors
@@ -24,3 +24,9 @@ run:
 gui:
 	@g++ gui.cpp -o gui -lfltk
 	@./gui
+
+test: 
+	@g++ -DTESTING timelogger.cpp utils.cpp -o timelogger;
+
+study: 
+	@g++ -DSTUDY timelogger.cpp utils.cpp -o timelogger;

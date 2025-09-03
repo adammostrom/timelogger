@@ -1,12 +1,14 @@
 [] Add /r for the menu printout so it overwrites and wont stack
-[/] Add option on "start" to select either "current time" or manually input time.
+[X] Add option on "start" to select either "current time" or manually input time.
     - Added, optimise by adding box for printout and remove "current time check" and replace with other functionality
-[] Do failchecks on all inputs
-[/] Add printout for what time is currently logged on input as "start" and "end" and add "Is this correct?" 
+[] IMPORTANT: Do failchecks on all inputs.
+    - [] Do checks on all inputs, and handle faults/bad inputs gracefully. 
+    - [] Implement good error handling and bad input handling
+[X] Add printout for what time is currently logged on input as "start" and "end" and add "Is this correct?" 
     - confirmation done for end time period, but for start it just shows the start period, except when manually entered.
-[/] Add function to modify the start / end time
+[X] Add function to modify the start / end time
     - Function to manually input start time exists.
-[] Add method to input custom end time (basically add start and end time manually)
+[X] Add method to input custom end time (basically add start and end time manually)
     [] Expand this option to also include previous dates
 [] Add method to sort the csv file (maybe with script)
 [X] Add function to check "current hours worked"
@@ -21,3 +23,5 @@
 [] Start refactoring all cin and \n into getline and endl instead. (Better for text outputs)
 [] IMPORTANT: Implement safe writing to CSV file (never write to actual file!)
 [X] Add function to manually set / add a break period
+[] Generalise the program so it can be run with any timing event such as study session or work! (Find way to load/create log files) -> Maybe add manager that checks "data storage" for existing files, and asks if the user wants to create a new log or use an existing one, and what to name it
+[] Fix the note taking part (make function, clean it of commas, make a safety check for input, a cancel command for skipping notetaking).

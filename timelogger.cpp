@@ -14,11 +14,19 @@ string active_log_file = csv_file;
 
 //#define TESTING   // uncomment this when testing
 
-#ifdef TESTING
-string DATA_FILE = "TEST_logged_times.csv";
+
+/* #if defined(TESTING)
+constexpr char DATA_FILE[] = "TEST_logged_times.csv";
+#elif defined(STUDY)
+constexpr char DATA_FILE[] = ".study_hours.csv";
 #else
-string DATA_FILE = "logged_times.csv";
-#endif
+constexpr char DATA_FILE[] = "logged_times.csv";
+#endif */
+
+// string DATA_FILE = "logged_times.csv";
+string DATA_FILE = ".study_hours.csv";
+// string DATA_FILE = "TEST_logged_times.csv";
+
 
 // ofstream = write data to file
 // ifstream = read data from file
@@ -47,9 +55,9 @@ int main(){
          << "2. End    (e) \n "
          << "3. Break  (b) \n "
          //<< "MANUAL ENTRY: \n"
-         << "4. Manual day entry   (md) \n "
-         << "5. Manual break entry (mb) \n "
-         << "6. Manual end entry   (me) \n "
+         << "4. Manual start entry  (md) \n "
+         << "5. Manual break entry  (mb) \n "
+         << "6. Manual end entry    (me) \n "
          //<< "MAINTENANCE: \n"
          << "7. Clear temporary files  (cl) \n "
          << "8. Cancel                 (c)  \n "
@@ -512,10 +520,18 @@ void save_to_log(){
     long total_work_time_hours = calculate_hour_from_seconds(total_work_time);
     long total_work_time_mins = calculate_mins_from_seconds(total_work_time);
 
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+
+    ///////////////// UNDER CONSTRUCTION ////////////////////
+    string note = "";
+    cout << "(Optional): Add note. (c) to ignore. \n";
+    getline(std::cin, note);
+    //////////////////////////////////////////////////
 
     ofstream log_file(DATA_FILE, ios::app); // append mode
 
-    string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins);
+    string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins, note);
 
 
     string message =  "NOTE: The following data will be written and stored: " + logging_record + "\n"
@@ -538,7 +554,7 @@ void save_to_log(){
 
 string format_record(time_t start_state, time_t end_state, long  break_total_hour,
                      long break_total_mins, long worked_hours,
-                     long worked_mins, long total_work_time_hours, long total_work_time_mins) 
+                     long worked_mins, long total_work_time_hours, long total_work_time_mins, string note) 
 {
     ostringstream oss;
     oss << put_time(localtime(&end_state), "%Y-%m-%d")          << ","  // Date
@@ -546,7 +562,8 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
         << put_time(localtime(&end_state), "%H:%M")             << ","  // End
         << break_total_hour << ":" << setw(2) << setfill('0') << break_total_mins          << ","  // Break Total
         << worked_hours << ":" << setw(2) << setfill('0') << worked_mins << "," // Hours worked
-        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << "\n";        // Total time
+        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << ","        // Total time
+        << note << "\n";
 
     return oss.str();
 }
