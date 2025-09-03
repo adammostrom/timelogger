@@ -9,7 +9,7 @@ clean:
 	@echo "Temporary datafiles cleaned."
 
 build:
-	@g++ timelogger.cpp -o timelogger 
+	@g++ timelogger.cpp utils.cpp -o timelogger 
 
 log:
 	@cat logged_times.csv
@@ -26,7 +26,7 @@ gui:
 	@./gui
 
 test: 
-	@g++ -DTESTING timelogger.cpp utils.cpp -o timelogger;
+	@g++ timelogger.cpp utils.cpp -o timelogger;
 
 study: 
-	@g++ -DSTUDY timelogger.cpp utils.cpp -o timelogger;
+	@g++ timelogger.cpp utils.cpp -o timelogger;
