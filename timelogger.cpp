@@ -23,8 +23,8 @@ constexpr char DATA_FILE[] = ".study_hours.csv";
 constexpr char DATA_FILE[] = "logged_times.csv";
 #endif */
 
-// string DATA_FILE = "logged_times.csv";
-string DATA_FILE = ".study_hours.csv";
+string DATA_FILE = "logged_times.csv";
+//string DATA_FILE = ".study_hours.csv";
 // string DATA_FILE = "TEST_logged_times.csv";
 
 
