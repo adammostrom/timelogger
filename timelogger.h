@@ -25,7 +25,7 @@ void manual_day_entry();
 
 string format_record(time_t start_state, time_t end_state, long  break_total_hour,
                      long break_total_mins, long worked_hours,
-                     long worked_mins, long total_work_time_hours, long total_work_time_mins, string note);
+                     long worked_mins, long total_work_time_hours, long total_work_time_mins);
 bool confirm_logging(const string& record);
 void clear_temp_files();
 bool check_day_started();

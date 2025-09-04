@@ -82,6 +82,12 @@ int main(){
     if(input == '6' || input == 'me' ){
         command = 6;
     }
+    if(input == '7' || input == 'cl' ){
+        command = 7;
+    }
+    if(input == '8' || input == 'c' ){
+        command = 8;
+    }
 
     switch_command(command);
 }
@@ -102,13 +108,13 @@ int switch_command(const int &command){
             manual_day_entry();
             break;
         case 5:
-            clear_temp_files();
-            break;
-        case 6:
             manual_break_entry();
             break;
-        case 7:
+        case 6:
             manual_end_entry();
+            break;
+        case 7:
+            clear_temp_files();
             break;
         case 8:
             return 0;
@@ -117,6 +123,7 @@ int switch_command(const int &command){
             break;
         }
 }
+
 
 bool check_day_started(){
     ifstream start_state_file(".start_state.txt");
@@ -203,9 +210,7 @@ void get_current_worked(){
 }
 
 void manual_entry(const string &filename){
-    if(check_day_started()){
-        cout << "Warning. Day already logged as started. Proceeding will overwrite.\n";
-    }
+
 
     tuple<int, int> hhmm = parse_entry();
 
@@ -230,7 +235,7 @@ void manual_entry(const string &filename){
         return;
     }
 
-    save_to_file(".start_state.txt", started_time);
+    save_to_file(filename, started_time);
 }
 
 void manual_day_entry(){
@@ -520,18 +525,19 @@ void save_to_log(){
     long total_work_time_hours = calculate_hour_from_seconds(total_work_time);
     long total_work_time_mins = calculate_mins_from_seconds(total_work_time);
 
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-
+/* 
     ///////////////// UNDER CONSTRUCTION ////////////////////
     string note = "";
     cout << "(Optional): Add note. (c) to ignore. \n";
     getline(std::cin, note);
-    //////////////////////////////////////////////////
+    ///////////////////////////////////////////////////
 
+     */
     ofstream log_file(DATA_FILE, ios::app); // append mode
 
-    string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins, note);
+    string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins);
 
 
     string message =  "NOTE: The following data will be written and stored: " + logging_record + "\n"
@@ -554,7 +560,7 @@ void save_to_log(){
 
 string format_record(time_t start_state, time_t end_state, long  break_total_hour,
                      long break_total_mins, long worked_hours,
-                     long worked_mins, long total_work_time_hours, long total_work_time_mins, string note) 
+                     long worked_mins, long total_work_time_hours, long total_work_time_mins) 
 {
     ostringstream oss;
     oss << put_time(localtime(&end_state), "%Y-%m-%d")          << ","  // Date
@@ -562,8 +568,8 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
         << put_time(localtime(&end_state), "%H:%M")             << ","  // End
         << break_total_hour << ":" << setw(2) << setfill('0') << break_total_mins          << ","  // Break Total
         << worked_hours << ":" << setw(2) << setfill('0') << worked_mins << "," // Hours worked
-        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << ","        // Total time
-        << note << "\n";
+        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << "," ;       // Total time
+        //<< note << "\n";
 
     return oss.str();
 }
