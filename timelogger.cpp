@@ -12,20 +12,11 @@ string csv_testfile = "TEST_logged_times.csv";
 
 string active_log_file = csv_file;
 
-//#define TESTING   // uncomment this when testing
 
 
-/* #if defined(TESTING)
-constexpr char DATA_FILE[] = "TEST_logged_times.csv";
-#elif defined(STUDY)
-constexpr char DATA_FILE[] = ".study_hours.csv";
-#else
-constexpr char DATA_FILE[] = "logged_times.csv";
-#endif */
-
-string DATA_FILE = "logged_times.csv";
+//string DATA_FILE = "logged_times.csv";
 //string DATA_FILE = ".study_hours.csv";
-// string DATA_FILE = "TEST_logged_times.csv";
+string DATA_FILE = "TEST_logged_times.csv";
 
 
 // ofstream = write data to file
@@ -48,7 +39,7 @@ int main(){
     }
 
     int command;
-    char input;
+    string input;
     cout << "\rFollowing commands available:\n " 
          //<< "> TIME TRACKING: \n"
          << "1. Start  (s) \n "
@@ -64,30 +55,32 @@ int main(){
          << "Input a command: \n ";
     cin >> input;
 
-    if(input == '1' || input == 's' ){
+
+    if(input == "1" || input == "s" ){
         command = 1;
     }
-    if(input == '2' || input == 'e' ){
+    else if(input == "2" || input == "e" ){
         command = 2;
     }
-    if(input == '3' || input == 'b' ){
+    else if(input == "3" || input == "b" ){
         command = 3;
     }
-    if(input == '4' || input == 'md' ){
+    else if(input == "4" || input == "md" ){
         command = 4;
     }
-    if(input == '5' || input == 'mb' ){
+    else if(input == "5" || input == "mb" ){
         command = 5;
     }
-    if(input == '6' || input == 'me' ){
+    else if(input == "6" || input == "me" ){
         command = 6;
     }
-    if(input == '7' || input == 'cl' ){
+    else if(input == "7" || input == "cl" ){
         command = 7;
     }
-    if(input == '8' || input == 'c' ){
+    else if(input == "8" || input == "c" ){
         command = 8;
     }
+    else command = 0;
 
     switch_command(command);
 }
@@ -122,6 +115,7 @@ int switch_command(const int &command){
             cout << "\rCancelled or no command given.";
             break;
         }
+    return 0;
 }
 
 
@@ -130,7 +124,6 @@ bool check_day_started(){
 
     if(!start_state_file){
         return false;
-
     }
 
     long temp = 0;
@@ -146,41 +139,14 @@ bool check_day_started(){
     return true;
 
 }
-/* 
-tuple <time_t, time_t> get_started_time(){
-    ifstream start_time_file(".start_state.txt");
-    tuple<time_t, time_t> day_started;
-    if(start_time_file){
-        time_t start_time = 0;
-        time_t start_state = 0;
-
-        start_time_file >> start_state;
-        start_time_file >> start_time;
-
-        start_time_file.close();
-        
-        auto day_started = make_tuple(start_state, start_time);
-        return day_started;
-    }
-    return
-} */
 
 void get_current_worked(){
 
     if(!check_day_started()){
-        cout << "Day not started" << endl;
         return;
     }
 
-    ifstream start_time_file(".start_state.txt");
-
-    time_t start_time = 0;
-    time_t start_state = 0;
-
-    start_time_file >> start_state;
-    start_time_file >> start_time;
-
-    start_time_file.close();
+    long start_state = read_from_file(".start_state.txt");
 
     // Read from file
     ifstream break_time_file(".break_total.txt");
@@ -197,7 +163,7 @@ void get_current_worked(){
 
     time_t now = get_current_time();
 
-    // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
+    // Unix gets the total seconds, the difference will be in seconds. 
     long seconds = static_cast<int>(difftime(now,start_state)) - break_total;
     long hours = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
@@ -255,6 +221,31 @@ void manual_end_entry(){
 
     manual_entry(".end_state.txt");
     save_to_log();
+}
+
+void manual_break_entry(){
+
+    tuple <int, int> hhmm = parse_entry();
+
+    long hh = get<0>(hhmm);
+    long mm = get<1>(hhmm);
+
+
+    long secs = calculate_secs_from_hour_min(hh,mm);
+
+    long tot = read_from_file(".break_total.txt");
+
+    tot += secs;
+
+    string message = "The time entered is: " + to_string(hh) + ":" + to_string(mm) + ". \n";
+
+    if(!confirm(message)){
+        cout << "Break time not saved\n";
+        return;
+    } 
+    
+    save_to_file(".break_total.txt", tot);
+
 }
 
 tuple<int, int> read_epoch_secs_convert_to_hhmm(const string &filename){
@@ -321,30 +312,7 @@ void save_to_file(const string &filename, int tot){
     file.close();
 }
 
-void manual_break_entry(){
 
-    tuple <int, int> hhmm = parse_entry();
-
-    long hh = get<0>(hhmm);
-    long mm = get<1>(hhmm);
-
-
-    long secs = calculate_secs_from_hour_min(hh,mm);
-
-    long tot = read_from_file(".break_total.txt");
-
-    tot += secs;
-
-    string message = "The time entered is: " + to_string(hh) + ":" + to_string(mm) + ". \n";
-
-    if(!confirm(message)){
-        cout << "Break time not saved\n";
-        return;
-    } 
-    
-    save_to_file(".break_total.txt", tot);
-
-}
 
 time_t get_current_time(){
     auto now_f = system_clock::now();
@@ -430,8 +398,11 @@ int break_stop(){
 
     
 
-    cout << "Break ended. Summary: " << hours << setw(2) << setfill('0') << " hours, " << minutes << setw(2) << setfill('0') << " minutes and " << remains << " seconds. \nSave break period? (yes/no) \n";
+    cout << "Break ended. Summary: " << hours << setw(2) << setfill('0') << " hours, " 
+                                     << minutes << setw(2) << setfill('0') << " minutes and " 
+                                     << remains << " seconds. \nSave break period? (yes/no) \n";
 
+    
     string command;
     cin >> command;
 
@@ -568,7 +539,7 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
         << put_time(localtime(&end_state), "%H:%M")             << ","  // End
         << break_total_hour << ":" << setw(2) << setfill('0') << break_total_mins          << ","  // Break Total
         << worked_hours << ":" << setw(2) << setfill('0') << worked_mins << "," // Hours worked
-        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << "," ;       // Total time
+        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins;       // Total time
         //<< note << "\n";
 
     return oss.str();
