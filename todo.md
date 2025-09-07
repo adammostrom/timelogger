@@ -25,3 +25,7 @@
 [X] Add function to manually set / add a break period
 [] Generalise the program so it can be run with any timing event such as study session or work! (Find way to load/create log files) -> Maybe add manager that checks "data storage" for existing files, and asks if the user wants to create a new log or use an existing one, and what to name it
 [] Fix the note taking part (make function, clean it of commas, make a safety check for input, a cancel command for skipping notetaking).
+ [] Add smart tracker to calculate max amount of break or how many more hours to work to fit 8 hours (or however many you wish to work), maybe this can be done with some kind of countdown
+[] Add more functionality for the csv files to parse data and get information
+[] Fix the problem with which dataset to use
+

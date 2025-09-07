@@ -15,8 +15,8 @@ string active_log_file = csv_file;
 
 
 //string DATA_FILE = "logged_times.csv";
-//string DATA_FILE = ".study_hours.csv";
-string DATA_FILE = "TEST_logged_times.csv";
+string DATA_FILE = ".study_hours.csv";
+//string DATA_FILE = "TEST_logged_times.csv";
 
 
 // ofstream = write data to file
@@ -34,7 +34,7 @@ string DATA_FILE = "TEST_logged_times.csv";
 int main(){
 
     // Show the current time worked on start
-    if(check_day_started()){
+    if(check_session_started()){
         get_current_worked();
     }
 
@@ -98,7 +98,7 @@ int switch_command(const int &command){
             break_start();
             break;
         case 4:
-            manual_day_entry();
+            manual_session_entry();
             break;
         case 5:
             manual_break_entry();
@@ -119,7 +119,7 @@ int switch_command(const int &command){
 }
 
 
-bool check_day_started(){
+bool check_session_started(){
     ifstream start_state_file(".start_state.txt");
 
     if(!start_state_file){
@@ -142,7 +142,7 @@ bool check_day_started(){
 
 void get_current_worked(){
 
-    if(!check_day_started()){
+    if(!check_session_started()){
         return;
     }
 
@@ -204,10 +204,10 @@ void manual_entry(const string &filename){
     save_to_file(filename, started_time);
 }
 
-void manual_day_entry(){
+void manual_session_entry(){
 
-    if(check_day_started()){
-        cout << "Warning. Day already logged as started. Proceeding will overwrite.\n";
+    if(check_session_started()){
+        cout << "Warning. Session already logged as started. Proceeding will overwrite.\n";
     }
 
     manual_entry(".start_state.txt");
@@ -215,8 +215,8 @@ void manual_day_entry(){
 }
 
 void manual_end_entry(){
-    if(!check_day_started()){
-        throw runtime_error("Day not started. Cannot end non-started day.\n");
+    if(!check_session_started()){
+        throw runtime_error("Session not started. Cannot end non-started session.\n");
     }
 
     manual_entry(".end_state.txt");
@@ -425,8 +425,8 @@ int break_stop(){
 
 int start_calculator(){
 
-    if(check_day_started()){
-        cerr << "\rDay already started! \n";
+    if(check_session_started()){
+        cerr << "\rSession already started! \n";
         return 0;
     }
 
@@ -444,14 +444,14 @@ int start_calculator(){
 
     start_file.close();
 
-    cout << "Day started! Time recorded: " << put_time(localtime(&now_c), "%H:%M \n");
+    cout << "Session started! Time recorded: " << put_time(localtime(&now_c), "%H:%M \n");
 
     return 0;
 }
 
 void end_calculator(){
-    if(!check_day_started()){
-        throw runtime_error("Day not started, cannot end time \n"); 
+    if(!check_session_started()){
+        throw runtime_error("Session not started, cannot end time \n"); 
         return;
     }
     
@@ -551,7 +551,7 @@ void clear_file(const string& filename) {
 
 void clear_temp_files(){
 
-    string message = "Clear temporary files? Current data will be erased!";
+    string message = "Clear temporary files? Current data will be erased! \n";
 
     if(confirm(message)){
         clear_file(".break_start.txt");
