@@ -19,7 +19,7 @@
 [X] Check bug for duplicate entries
 [/] Fix so that the "current worked" wont print anything unless the file contains some data
     - Only prints when day is started
-[] Calculate the break parameter in the CSV file to still be HH:MM and dicard second all together.
+[X] Calculate the break parameter in the CSV file to still be HH:MM and dicard seconds all together.
 [] Start refactoring all cin and \n into getline and endl instead. (Better for text outputs)
 [] IMPORTANT: Implement safe writing to CSV file (never write to actual file!)
 [X] Add function to manually set / add a break period
@@ -27,5 +27,5 @@
 [] Fix the note taking part (make function, clean it of commas, make a safety check for input, a cancel command for skipping notetaking).
  [] Add smart tracker to calculate max amount of break or how many more hours to work to fit 8 hours (or however many you wish to work), maybe this can be done with some kind of countdown
 [] Add more functionality for the csv files to parse data and get information
-[] Fix the problem with which dataset to use
+[X] Fix the problem with which dataset to use
 

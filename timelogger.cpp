@@ -4,6 +4,10 @@
 //#include "gui.h"
 // #include "gui.h"
 
+#ifndef DATA_FILE
+#define DATA_FILE "logged_times.csv"
+#endif
+
 
 atomic<bool> quit(false);
 
@@ -15,7 +19,7 @@ string active_log_file = csv_file;
 
 
 //string DATA_FILE = "logged_times.csv";
-string DATA_FILE = ".study_hours.csv";
+//string DATA_FILE = ".study_hours.csv";
 //string DATA_FILE = "TEST_logged_times.csv";
 
 
@@ -31,15 +35,30 @@ string DATA_FILE = ".study_hours.csv";
     return Fl::run();
 } */
 
-int main(){
+int main(int argc, char* argv[]){
 
     // Show the current time worked on start
     if(check_session_started()){
         get_current_worked();
     }
 
-    int command;
-    string input;
+    if(argc >= 2){
+        string cmd = argv[1];
+        if (cmd == "start") start_calculator();
+        else if (cmd == "end") end_calculator();
+        else if (cmd == "break") break_start();
+        else show_menu();
+        return 0;
+    }
+    
+
+    show_menu();
+    return 0;
+
+}
+
+void show_menu(){
+    current_log_file();
     cout << "\rFollowing commands available:\n " 
          //<< "> TIME TRACKING: \n"
          << "1. Start  (s) \n "
@@ -53,6 +72,10 @@ int main(){
          << "7. Clear temporary files  (cl) \n "
          << "8. Cancel                 (c)  \n "
          << "Input a command: \n ";
+
+             int command;
+    string input;
+
     cin >> input;
 
 
@@ -116,6 +139,10 @@ int switch_command(const int &command){
             break;
         }
     return 0;
+}
+
+void current_log_file(){
+    cout << "Current log file in use: " << DATA_FILE << "\n";
 }
 
 
@@ -511,7 +538,7 @@ void save_to_log(){
     string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins);
 
 
-    string message =  "NOTE: The following data will be written and stored: " + logging_record + "\n"
+    string message =  "NOTE: The following data will be written and stored: " + logging_record + "to: " + DATA_FILE + "\n"
          + "Save this record?\n";
 
     if(confirm(message)) {
@@ -539,7 +566,7 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
         << put_time(localtime(&end_state), "%H:%M")             << ","  // End
         << break_total_hour << ":" << setw(2) << setfill('0') << break_total_mins          << ","  // Break Total
         << worked_hours << ":" << setw(2) << setfill('0') << worked_mins << "," // Hours worked
-        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins;       // Total time
+        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << "\n";       // Total time
         //<< note << "\n";
 
     return oss.str();

@@ -26,7 +26,11 @@ gui:
 	@./gui
 
 test: 
-	@g++ timelogger.cpp utils.cpp -o timelogger;
+	@g++ timelogger.cpp utils.cpp -DDATA_FILE='"TEST_logged_times.csv"' -o timelogger;
+	@./timelogger
+
 
 study: 
-	@g++ timelogger.cpp utils.cpp -o timelogger;
+	@g++ timelogger.cpp utils.cpp -DDATA_FILE='".study_hours.csv"' -o timelogger;
+	@./timelogger
+

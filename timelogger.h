@@ -20,6 +20,8 @@ time_t get_current_time();
 int start_calculator();
 void end_calculator();
 void manual_session_entry();
+void show_menu();
+void current_log_file();
 
 
 
