@@ -28,4 +28,4 @@
  [] Add smart tracker to calculate max amount of break or how many more hours to work to fit 8 hours (or however many you wish to work), maybe this can be done with some kind of countdown
 [] Add more functionality for the csv files to parse data and get information
 [X] Fix the problem with which dataset to use
-
+[] FIx the printout confirmation "time entered" as it now states "8:0" for "08:00"
