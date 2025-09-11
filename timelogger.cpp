@@ -11,16 +11,7 @@
 
 atomic<bool> quit(false);
 
-string csv_file = "logged_times.csv";
-string csv_testfile = "TEST_logged_times.csv";
-
-string active_log_file = csv_file;
-
-
-
-//string DATA_FILE = "logged_times.csv";
-//string DATA_FILE = ".study_hours.csv";
-//string DATA_FILE = "TEST_logged_times.csv";
+string csv_file = "work_hours.csv";
 
 
 // ofstream = write data to file
@@ -363,15 +354,10 @@ void input_thread(){
 int break_start(){
 
     time_t now_c = get_current_time();
-/*     ofstream file(".break_start.txt");
-    
-    // Store it as unix timestamp
-    file << now_c;
-    file.close(); */
 
     save_to_file(".break_start.txt", now_c);
 
-    thread t(input_thread); // Create thread that checks for input.
+    thread t(input_thread); 
 
     cout << "Break started. Press q to cancel the break. \n";
 
@@ -398,11 +384,13 @@ int break_start(){
 }
 
 int break_stop(){
-    ifstream break_start_file(".break_start.txt");
+/*     ifstream break_start_file(".break_start.txt");
 
     time_t start;
     break_start_file >> start;
-    break_start_file.close();
+    break_start_file.close(); */
+
+    long start = read_from_file(".break_start.txt");
 
     time_t now_c = get_current_time();
 
@@ -450,30 +438,19 @@ int break_stop(){
 }
 
 
-int start_calculator(){
+void start_calculator(){
 
     if(check_session_started()){
         cerr << "\rSession already started! \n";
-        return 0;
+        return;
     }
 
     time_t now_c = get_current_time();
 
-    ofstream start_file(".start_state.txt"); 
-
-    /*
-    Write the file as: 
-    state (unix time)
-    time (hour:minutes, ex: 00:40)
-    */
-    start_file << now_c << "\n";
-    //start_file << put_time(localtime(&now_c), "%H:%M \n");
-
-    start_file.close();
+    save_to_file(".start_state.txt", now_c);
 
     cout << "Session started! Time recorded: " << put_time(localtime(&now_c), "%H:%M \n");
 
-    return 0;
 }
 
 void end_calculator(){
@@ -482,48 +459,29 @@ void end_calculator(){
         return;
     }
     
-    auto now = system_clock::now();
-    time_t end_state = system_clock::to_time_t(now);
+    /* auto now = system_clock::now();
+    time_t end_state = system_clock::to_time_t(now); */
+    time_t now_c = get_current_time();
 
-    save_to_file(".end_state.txt", end_state);
+    save_to_file(".end_state.txt", now_c);
 
     save_to_log();
 
 }
 
 void save_to_log(){
-    // Extract the break first:
 
     long break_total = read_from_file(".break_total.txt");
-
-    long break_total_hour = calculate_hour_from_seconds(break_total);
-    long break_total_mins = calculate_mins_from_seconds(break_total);
-
-    tuple<int, int> break_hhmm = read_epoch_secs_convert_to_hhmm(".break_total.txt");
-
 
     long end_state = read_from_file(".end_state.txt");
     
     long start_state = read_from_file(".start_state.txt");
     
-    tuple<int, int> hhmm = read_epoch_secs_convert_to_hhmm(".start_state.txt");
-
     // Work time (hours:mins)
-    long elapsed = end_state - start_state;
-    if(elapsed < 0){
-        elapsed = 0;
-    }
-    
+    long elapsed = (end_state - start_state) > 0 ? (end_state - start_state) : 0;
+
     // Total worked time (work time - break)
-    long total_work_time = elapsed - break_total;
-
-    long worked_hours = calculate_hour_from_seconds(elapsed);
-    long worked_mins = calculate_mins_from_seconds(elapsed);
-
-    long total_work_time_hours = calculate_hour_from_seconds(total_work_time);
-    long total_work_time_mins = calculate_mins_from_seconds(total_work_time);
-
-    //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    long total_work_time = (elapsed - break_total) > 0 ? (elapsed - break_total) : 0;
 
 /* 
     ///////////////// UNDER CONSTRUCTION ////////////////////
@@ -535,11 +493,20 @@ void save_to_log(){
      */
     ofstream log_file(DATA_FILE, ios::app); // append mode
 
-    string logging_record = format_record(start_state, end_state, break_total_hour, break_total_mins, worked_hours, worked_mins, total_work_time_hours, total_work_time_mins);
+    string logging_record = format_record(
+        start_state, 
+        end_state, 
+        calculate_hour_from_seconds(break_total), 
+        calculate_mins_from_seconds(break_total), 
+        calculate_hour_from_seconds(elapsed), 
+        calculate_mins_from_seconds(elapsed), 
+        calculate_hour_from_seconds(total_work_time), 
+        calculate_mins_from_seconds(total_work_time)
+    );
 
 
-    string message =  "NOTE: The following data will be written and stored: " + logging_record + "to: " + DATA_FILE + "\n"
-         + "Save this record?\n";
+    string message =  "NOTE: The following data will be written and stored: " + logging_record 
+        + "to: " + DATA_FILE + "\n" + "Save this record?\n";
 
     if(confirm(message)) {
         cout << "Record stored. \n";
@@ -547,11 +514,10 @@ void save_to_log(){
     } else {
         cout << "Record not stored! \n";
     }
-
+    
+    log_file.close();
     
     clear_temp_files();
-
-    log_file.close();
 
     return;
 }
@@ -561,12 +527,12 @@ string format_record(time_t start_state, time_t end_state, long  break_total_hou
                      long worked_mins, long total_work_time_hours, long total_work_time_mins) 
 {
     ostringstream oss;
-    oss << put_time(localtime(&end_state), "%Y-%m-%d")          << ","  // Date
-        << put_time(localtime(&start_state), "%H:%M")           << ","  // Start
-        << put_time(localtime(&end_state), "%H:%M")             << ","  // End
-        << break_total_hour << ":" << setw(2) << setfill('0') << break_total_mins          << ","  // Break Total
-        << worked_hours << ":" << setw(2) << setfill('0') << worked_mins << "," // Hours worked
-        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins << "\n";       // Total time
+    oss << put_time(localtime(&end_state), "%Y-%m-%d")                                       << ","  
+        << put_time(localtime(&start_state), "%H:%M")                                        << ","  
+        << put_time(localtime(&end_state), "%H:%M")                                          << ","  
+        << break_total_hour       << ":" << setw(2) << setfill('0') << break_total_mins      << ","  
+        << worked_hours           << ":" << setw(2) << setfill('0') << worked_mins           << "," 
+        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins  << "\n";  
         //<< note << "\n";
 
     return oss.str();
@@ -590,7 +556,7 @@ void clear_temp_files(){
 
         return;
     }
-    cout << "Temporary files not cleared! \n";
+    cout << "Temporary files NOT cleared! \n";
 }
 
 bool confirm(const string& message) {

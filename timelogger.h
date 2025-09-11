@@ -17,7 +17,7 @@ int break_start();
 int break_stop();
 void get_current_worked();
 time_t get_current_time();
-int start_calculator();
+void start_calculator();
 void end_calculator();
 void manual_session_entry();
 void show_menu();
