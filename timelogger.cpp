@@ -1,12 +1,15 @@
 #include "timelogger.h"
 #include "utils.h"
-
+#include <filesystem>
+#include <vector>
 //#include "gui.h"
 // #include "gui.h"
 
 #ifndef DATA_FILE
 #define DATA_FILE "logged_times.csv"
 #endif
+
+#define DATADIRECTORY "datafiles"
 
 
 atomic<bool> quit(false);
@@ -27,6 +30,16 @@ string csv_file = "work_hours.csv";
 } */
 
 int main(int argc, char* argv[]){
+
+
+    vector<string> datafiles = read_from_directory(DATADIRECTORY);
+
+    string path;
+
+    cout << "Files in datadirectory for logging: \n";
+    for(int i = 0; i < datafiles.size();  i++){
+        cout << to_string(i) << ". " << datafiles[i] << endl;
+    }
 
     // Show the current time worked on start
     if(check_session_started()){
@@ -415,12 +428,16 @@ int break_stop(){
 
     cout << "Break ended. Summary: " << hours << setw(2) << setfill('0') << " hours, " 
                                      << minutes << setw(2) << setfill('0') << " minutes and " 
-                                     << remains << " seconds. \nSave break period? (yes/no) \n";
+                                     << remains << " seconds. \nSave break period? (yes/no) \n"
+                                     << "or e for edit \n";
 
     
     string command;
     cin >> command;
 
+    if(command == "e"){
+        manual_break_entry();
+    }
 
     if(command == "no"){
         cout << "Break period not saved. \n";
@@ -505,6 +522,15 @@ void save_to_log(){
     );
 
 
+    vector<string> datafiles = read_from_directory(DATADIRECTORY);
+
+    string path;
+
+    cout << "Files in datadirectory for logging: \n";
+    for(int i = 0; i < datafiles.size() + 1;  i++){
+        cout << to_string(i) << ". " << datafiles[i] << endl;
+    }
+
     string message =  "NOTE: The following data will be written and stored: " + logging_record 
         + "to: " + DATA_FILE + "\n" + "Save this record?\n";
 
@@ -556,7 +582,7 @@ void clear_temp_files(){
 
         return;
     }
-    cout << "Temporary files NOT cleared! \n";
+    cout << "Temporary files not cleared! \n";
 }
 
 bool confirm(const string& message) {
@@ -574,4 +600,18 @@ bool confirm(const string& message) {
         return true; // accepted
     }
     return false; // anything else = reject
+}
+vector<string> read_from_directory(const string& path) {
+    vector<string> files;
+    if (path.empty())
+        return files;
+    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        files.push_back(entry.path().string());
+    }
+    return files;
+}
+
+
+void list_files_from_data_dir(){
+
 }
