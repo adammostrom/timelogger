@@ -35,11 +35,11 @@ int main(int argc, char* argv[]){
     vector<string> datafiles = read_from_directory(DATADIRECTORY);
 
     string path;
-/* 
+ 
     cout << "Files in datadirectory for logging: \n";
     for(int i = 0; i < datafiles.size();  i++){
         cout << to_string(i) << ". " << datafiles[i] << endl;
-    } */
+    } 
 
     // Show the current time worked on start
     if(check_session_started()){
