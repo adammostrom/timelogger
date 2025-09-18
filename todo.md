@@ -30,3 +30,32 @@
 [X] Fix the problem with which dataset to use
 [] FIx the printout confirmation "time entered" as it now states "8:0" for "08:00"
 [] Make function to edit start time
+
+
+[] Look at refactoring for the log file search function:
+
+std::vector<fs::path> read_from_directory(const fs::path& path) {
+    std::vector<fs::path> files;
+    try {
+        for (const auto& entry : fs::directory_iterator(path))
+            if (entry.is_regular_file()) files.push_back(entry.path());
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << e.what() << '\n';
+    }
+    return files;
+}
+
+fs::path file_to_log_data(const fs::path& dir) {
+    auto files = read_from_directory(dir);
+
+    std::cout << "Files:\n";
+    for (size_t i = 0; i < files.size(); ++i)
+        std::cout << i << ". " << files[i].filename().string() << '\n';
+
+    std::cout << "Select index: ";
+    size_t input{};
+    std::cin >> input;
+    if (input >= files.size()) throw std::out_of_range("Invalid index");
+
+    return files[input]; // full path
+}s

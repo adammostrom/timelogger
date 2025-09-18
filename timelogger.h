@@ -25,6 +25,9 @@ void manual_session_entry();
 void show_menu();
 void current_log_file();
 
+
+string file_to_log_data();
+
 vector<string> read_from_directory(const string& path);
 
 string format_record(time_t start_state, time_t end_state, long  break_total_hour,

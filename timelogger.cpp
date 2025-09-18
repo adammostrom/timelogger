@@ -32,14 +32,7 @@ string csv_file = "work_hours.csv";
 int main(int argc, char* argv[]){
 
 
-    vector<string> datafiles = read_from_directory(DATADIRECTORY);
 
-    string path;
- 
-    cout << "Files in datadirectory for logging: \n";
-    for(int i = 0; i < datafiles.size();  i++){
-        cout << to_string(i) << ". " << datafiles[i] << endl;
-    } 
 
     // Show the current time worked on start
     if(check_session_started()){
@@ -77,7 +70,7 @@ void show_menu(){
          << "8. Cancel                 (c)  \n "
          << "Input a command: \n ";
 
-             int command;
+    int command;
     string input;
 
     cin >> input;
@@ -522,17 +515,10 @@ void save_to_log(){
     );
 
 
-    vector<string> datafiles = read_from_directory(DATADIRECTORY);
-
-    string path;
-
-    cout << "Files in datadirectory for logging: \n";
-    for(int i = 0; i < datafiles.size();  i++){
-        cout << to_string(i) << ". " << datafiles[i] << endl;
-    }
+    string datafile = file_to_log_data();
 
     string message =  "NOTE: The following data will be written and stored: " + logging_record 
-        + "to: " + DATA_FILE + "\n" + "Save this record?\n";
+        + "to: " + datafile + "\n" + "Save this record?\n";
 
     if(confirm(message)) {
         cout << "Record stored. \n";
@@ -606,12 +592,27 @@ vector<string> read_from_directory(const string& path) {
     if (path.empty())
         return files;
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
-        files.push_back(entry.path().string());
+        files.push_back(entry.path().filename());
     }
     return files;
 }
 
 
-void list_files_from_data_dir(){
+string file_to_log_data(){
+    vector<string> datafiles = read_from_directory(DATADIRECTORY);
+
+    string path;
+ 
+    cout << "Files in datadirectory for logging: \n";
+    for(int i = 0; i < datafiles.size();  i++){
+        cout << to_string(i) << ". " << datafiles[i] << endl;
+    } 
+
+    cout << "Select which logfile to store the data. \n";
+    int input;
+    cin >> input;
+
+    return datafiles[input];
 
 }
+
