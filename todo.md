@@ -29,7 +29,8 @@
 [] Add more functionality for the csv files to parse data and get information
 [X] Fix the problem with which dataset to use
 [] FIx the printout confirmation "time entered" as it now states "8:0" for "08:00"
-[] Make function to edit start time
+[X] Make function to edit start time
+    - Added so that you can manually enter start time.
 
 
 [] Look at refactoring for the log file search function:

@@ -502,6 +502,7 @@ void save_to_log(){
 
      */
     string datafile = file_to_log_data();
+    cout << datafile;
     ofstream log_file(datafile, ios::app); // append mode
 
     string logging_record = format_record(
@@ -599,6 +600,7 @@ vector<string> read_from_directory(const string& path) {
 
 
 string file_to_log_data(){
+    namespace fs = std::filesystem;
     vector<string> datafiles = read_from_directory(DATADIRECTORY);
 
     string path;
@@ -612,7 +614,9 @@ string file_to_log_data(){
     int input;
     cin >> input;
 
-    return datafiles[input];
-
+    // use filesystem::path
+    fs::path fullpath = fs::path(DATADIRECTORY) / datafiles[input];
+    return fullpath.string();  
+//
 }
 
