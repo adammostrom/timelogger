@@ -5,9 +5,9 @@
 //#include "gui.h"
 // #include "gui.h"
 
-#ifndef DATA_FILE
+/* #ifndef DATA_FILE
 #define DATA_FILE "logged_times.csv"
-#endif
+#endif */
 
 #define DATADIRECTORY "datafiles"
 
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
 }
 
 void show_menu(){
-    current_log_file();
+    //current_log_file();
     cout << "\rFollowing commands available:\n " 
          //<< "> TIME TRACKING: \n"
          << "1. Start  (s) \n "
@@ -138,9 +138,9 @@ int switch_command(const int &command){
     return 0;
 }
 
-void current_log_file(){
+/* void current_log_file(){
     cout << "Current log file in use: " << DATA_FILE << "\n";
-}
+} */
 
 
 bool check_session_started(){
@@ -501,7 +501,8 @@ void save_to_log(){
     ///////////////////////////////////////////////////
 
      */
-    ofstream log_file(DATA_FILE, ios::app); // append mode
+    string datafile = file_to_log_data();
+    ofstream log_file(datafile, ios::app); // append mode
 
     string logging_record = format_record(
         start_state, 
@@ -515,7 +516,6 @@ void save_to_log(){
     );
 
 
-    string datafile = file_to_log_data();
 
     string message =  "NOTE: The following data will be written and stored: " + logging_record 
         + "to: " + datafile + "\n" + "Save this record?\n";

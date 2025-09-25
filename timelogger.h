@@ -23,7 +23,7 @@ void start_calculator();
 void end_calculator();
 void manual_session_entry();
 void show_menu();
-void current_log_file();
+//void current_log_file();
 
 
 string file_to_log_data();
