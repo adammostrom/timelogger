@@ -37,3 +37,7 @@ study:
 	@g++ timelogger.cpp utils.cpp -DDATA_FILE='"study_hours.csv"' -o timelogger;
 	@./timelogger
 
+log:
+	git checkout log;
+	git pull;
+	glazy;
