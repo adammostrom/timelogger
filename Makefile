@@ -19,8 +19,8 @@ commands:
 	@cat Makefile
 
 run:
-	git checkout log;
-	git pull;
+#	git checkout log;
+#	git pull;
 	@g++ timelogger.cpp utils.cpp -o timelogger;
 	@./timelogger
 
