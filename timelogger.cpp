@@ -1,12 +1,15 @@
 #include "timelogger.h"
 #include "utils.h"
-
+#include <filesystem>
+#include <vector>
 //#include "gui.h"
 // #include "gui.h"
 
-#ifndef DATA_FILE
+/* #ifndef DATA_FILE
 #define DATA_FILE "logged_times.csv"
-#endif
+#endif */
+
+#define DATADIRECTORY "datafiles"
 
 
 atomic<bool> quit(false);
@@ -27,6 +30,9 @@ string csv_file = "work_hours.csv";
 } */
 
 int main(int argc, char* argv[]){
+
+
+
 
     // Show the current time worked on start
     if(check_session_started()){
@@ -49,7 +55,7 @@ int main(int argc, char* argv[]){
 }
 
 void show_menu(){
-    current_log_file();
+    //current_log_file();
     cout << "\rFollowing commands available:\n " 
          //<< "> TIME TRACKING: \n"
          << "1. Start  (s) \n "
@@ -64,7 +70,7 @@ void show_menu(){
          << "8. Cancel                 (c)  \n "
          << "Input a command: \n ";
 
-             int command;
+    int command;
     string input;
 
     cin >> input;
@@ -132,9 +138,9 @@ int switch_command(const int &command){
     return 0;
 }
 
-void current_log_file(){
+/* void current_log_file(){
     cout << "Current log file in use: " << DATA_FILE << "\n";
-}
+} */
 
 
 bool check_session_started(){
@@ -415,12 +421,16 @@ int break_stop(){
 
     cout << "Break ended. Summary: " << hours << setw(2) << setfill('0') << " hours, " 
                                      << minutes << setw(2) << setfill('0') << " minutes and " 
-                                     << remains << " seconds. \nSave break period? (yes/no) \n";
+                                     << remains << " seconds. \nSave break period? (yes/no) \n"
+                                     << "or e for edit \n";
 
     
     string command;
     cin >> command;
 
+    if(command == "e"){
+        manual_break_entry();
+    }
 
     if(command == "no"){
         cout << "Break period not saved. \n";
@@ -491,7 +501,9 @@ void save_to_log(){
     ///////////////////////////////////////////////////
 
      */
-    ofstream log_file(DATA_FILE, ios::app); // append mode
+    string datafile = file_to_log_data();
+    cout << datafile;
+    ofstream log_file(datafile, ios::app); // append mode
 
     string logging_record = format_record(
         start_state, 
@@ -505,8 +517,9 @@ void save_to_log(){
     );
 
 
+
     string message =  "NOTE: The following data will be written and stored: " + logging_record 
-        + "to: " + DATA_FILE + "\n" + "Save this record?\n";
+        + "to: " + datafile + "\n" + "Save this record?\n";
 
     if(confirm(message)) {
         cout << "Record stored. \n";
@@ -556,7 +569,7 @@ void clear_temp_files(){
 
         return;
     }
-    cout << "Temporary files NOT cleared! \n";
+    cout << "Temporary files not cleared! \n";
 }
 
 bool confirm(const string& message) {
@@ -575,3 +588,35 @@ bool confirm(const string& message) {
     }
     return false; // anything else = reject
 }
+vector<string> read_from_directory(const string& path) {
+    vector<string> files;
+    if (path.empty())
+        return files;
+    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        files.push_back(entry.path().filename());
+    }
+    return files;
+}
+
+
+string file_to_log_data(){
+    namespace fs = std::filesystem;
+    vector<string> datafiles = read_from_directory(DATADIRECTORY);
+
+    string path;
+ 
+    cout << "Files in datadirectory for logging: \n";
+    for(int i = 0; i < datafiles.size();  i++){
+        cout << to_string(i) << ". " << datafiles[i] << endl;
+    } 
+
+    cout << "Select which logfile to store the data. \n";
+    int input;
+    cin >> input;
+
+    // use filesystem::path
+    fs::path fullpath = fs::path(DATADIRECTORY) / datafiles[input];
+    return fullpath.string();  
+//
+}
+

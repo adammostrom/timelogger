@@ -9,6 +9,7 @@ clean:
 	@echo "Temporary datafiles cleaned."
 
 build:
+	@git checkout log;
 	@g++ timelogger.cpp utils.cpp -o timelogger 
 
 log:
