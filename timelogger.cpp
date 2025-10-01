@@ -35,10 +35,8 @@ int main(int argc, char* argv[]){
 
 
     // Show the current time worked on start
-    if(check_session_started()){
-        get_current_worked();
-    }
-
+    get_current_worked();
+    
     if(argc >= 2){
         string cmd = argv[1];
         if (cmd == "start") start_calculator();

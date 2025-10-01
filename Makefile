@@ -28,14 +28,5 @@ gui:
 	@g++ gui.cpp -o gui -lfltk
 	@./gui
 
-test: 
-	@g++ timelogger.cpp utils.cpp -DDATA_FILE='"TEST_logged_times.csv"' -o timelogger;
-	@./timelogger
-
-
-study: 
-	@g++ timelogger.cpp utils.cpp -DDATA_FILE='"study_hours.csv"' -o timelogger;
-	@./timelogger
-
 log:
 	./log_push_script.sh
