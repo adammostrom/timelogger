@@ -38,6 +38,4 @@ study:
 	@./timelogger
 
 log:
-	git checkout log;
-	git pull;
-	glazy;
+	./log_push_script.sh
