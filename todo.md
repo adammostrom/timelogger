@@ -31,5 +31,5 @@
 [] FIx the printout confirmation "time entered" as it now states "8:0" for "08:00"
 [X] Make function to edit start time
     - Added so that you can manually enter start time.
-
+[] Add file/functions to handle the csv file reading, like total amount of days, total hours, comp time etc.
 
