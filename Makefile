@@ -11,10 +11,7 @@ clean:
 build:
 	@git checkout log;
 	@g++ timelogger.cpp utils.cpp -o timelogger 
-
-log:
-	@cat logged_times.csv
-
+	
 commands:
 	@cat Makefile
 
@@ -29,4 +26,9 @@ gui:
 	@./gui
 
 log:
-	./log_push_script.sh
+	git fetch;
+	git checkout log;
+	git checkout dev -- /datafiles;
+	git commit -m "automatic log update";
+	git push;
+	git checkout dev;

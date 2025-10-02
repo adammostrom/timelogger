@@ -66,3 +66,4 @@ tuple<time_t, time_t> get_started_time();
 int test_gui(int argc, char **argv);
 
 void manual_entry(const string &filename);
+
