@@ -32,4 +32,4 @@
 [X] Make function to edit start time
     - Added so that you can manually enter start time.
 [] Add file/functions to handle the csv file reading, like total amount of days, total hours, comp time etc.
-
+[] Add check for datafiles, and if there are none, ask user to create one.

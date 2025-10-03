@@ -5,11 +5,19 @@
 //#include "gui.h"
 // #include "gui.h"
 
-/* #ifndef DATA_FILE
-#define DATA_FILE "logged_times.csv"
-#endif */
+namespace fs = std::filesystem;
 
-#define DATADIRECTORY "datafiles"
+fs::path DATA_DIRECTORY = "datafiles";
+
+void confirm_directory(const string directory){
+    if(!fs::exists(directory)){
+        cout << "No directory found. Creating new directory... \n";
+        if (fs::create_directory(directory)) {
+            std::cout << "Directory created: " << directory << "\n";
+        }
+    }
+}
+
 
 
 atomic<bool> quit(false);
@@ -32,9 +40,9 @@ string csv_file = "work_hours.csv";
 int main(int argc, char* argv[]){
 
 
+    confirm_directory(DATA_DIRECTORY);
 
 
-    
 
 
     // Show the current time worked on start
@@ -520,7 +528,7 @@ void save_to_log(){
 
 
     string message =  "NOTE: The following data will be written and stored: " + logging_record 
-        + "to: " + datafile + "\n" + "Save this record?\n";
+        + "to: " + datafile + "\n" + "Save this record? \n";
 
     if(confirm(message)) {
         cout << "Record stored. \n";
@@ -602,7 +610,8 @@ vector<string> read_from_directory(const string& path) {
 
 string file_to_log_data(){
     namespace fs = std::filesystem;
-    vector<string> datafiles = read_from_directory(DATADIRECTORY);
+
+    vector<string> datafiles = read_from_directory(DATA_DIRECTORY);
 
     string path;
  
@@ -616,7 +625,7 @@ string file_to_log_data(){
     cin >> input;
 
     // use filesystem::path
-    fs::path fullpath = fs::path(DATADIRECTORY) / datafiles[input];
+    fs::path fullpath = fs::path(DATA_DIRECTORY) / datafiles[input];
     return fullpath.string();  
 //
 }
