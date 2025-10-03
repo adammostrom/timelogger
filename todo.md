@@ -33,3 +33,4 @@
     - Added so that you can manually enter start time.
 [] Add file/functions to handle the csv file reading, like total amount of days, total hours, comp time etc.
 [] Add check for datafiles, and if there are none, ask user to create one.
+[] Add easier addition for options in the menu, like make a list of the options with their respective commands and string outputs, isntead of the bloated shit I have now.

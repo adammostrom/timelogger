@@ -63,6 +63,10 @@ int main(int argc, char* argv[]){
 
 }
 
+
+vector <string> menu_options = {};
+
+
 void show_menu(){
     //current_log_file();
     cout << "\rFollowing commands available:\n " 
@@ -511,7 +515,7 @@ void save_to_log(){
 
      */
     string datafile = file_to_log_data();
-    cout << datafile;
+    cout << datafile + " selected \n";
     ofstream log_file(datafile, ios::app); // append mode
 
     string logging_record = format_record(
@@ -607,14 +611,61 @@ vector<string> read_from_directory(const string& path) {
     return files;
 }
 
+bool check_name(const string &name){
+    int max = 30;
+    int min = 5;
+    if(name.size() >= 30){
+        cout << "Too many characters. Maximum input: " + to_string(max) + "\n Your input: " + to_string(name.size()) << endl;
+        return false;
+    }
+    if(name.size() < 6){ 
+        cout << "Too few characters. Minimum input: " +  to_string(min) + "\n Your input: " + to_string(name.size()) << endl;        
+        return false; 
+    }
+    return true;
+}
+
+int create_logging_file(){
+    cout << "Please give a name for the logging file, minimum 5 characters, max 30 characters: " << endl; 
+    string name;
+    cin >> name;
+    while(!check_name(name)){
+        cout << "Try again: " << endl;
+        cin >> name;
+    }
+
+    fs::path destination = fs::path(DATA_DIRECTORY) / (name + ".csv");
+
+
+    confirm_directory(DATA_DIRECTORY);
+
+    // Create the file at destination
+    std::ofstream file(destination);
+    if (!file) {
+        cerr << "Failed to create file: " << destination << "\n";
+        return 1;
+    }
+
+    file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min \n"; 
+    file.close();
+
+    cout << "Created file: " << destination << "\n";
+}
+
 
 string file_to_log_data(){
-    namespace fs = std::filesystem;
+    
+    if(read_from_directory(DATA_DIRECTORY).empty()){
+        cout << "No logging files found. Proceed to create one?\n";
+        string choice;
+        cin >> choice;
+        if(confirm(choice)){
+            create_logging_file();
+        }
+    }
 
     vector<string> datafiles = read_from_directory(DATA_DIRECTORY);
 
-    string path;
- 
     cout << "Files in datadirectory for logging: \n";
     for(int i = 0; i < datafiles.size();  i++){
         cout << to_string(i) << ". " << datafiles[i] << endl;
