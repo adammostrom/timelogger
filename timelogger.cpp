@@ -34,6 +34,9 @@ int main(int argc, char* argv[]){
 
 
 
+    
+
+
     // Show the current time worked on start
     get_current_worked();
     
