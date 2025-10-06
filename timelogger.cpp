@@ -650,6 +650,8 @@ int create_logging_file(){
     file.close();
 
     cout << "Created file: " << destination << "\n";
+
+    return 0;
 }
 
 
