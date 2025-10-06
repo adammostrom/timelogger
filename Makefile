@@ -31,4 +31,4 @@ log:
 	git pull;
 	git add .; 
 	git commit -m "automatic log push";
-	git push,
+	git push;
