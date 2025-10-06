@@ -7,7 +7,7 @@
 
 namespace fs = std::filesystem;
 
-fs::path DATA_DIRECTORY = "datafiles";
+fs::path DATA_DIRECTORY = "log-branch/datafiles";
 
 void confirm_directory(const string directory){
     if(!fs::exists(directory)){

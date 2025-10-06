@@ -26,9 +26,9 @@ gui:
 	@./gui
 
 log:
+	cd log-branch
 	git fetch;
-	git checkout log;
-	git checkout dev -- /datafiles;
-	git commit -m "automatic log update";
-	git push;
-	git checkout dev;
+	git pull;
+	git add .; 
+	git commit -m "automatic log push";
+	git push,
