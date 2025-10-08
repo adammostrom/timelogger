@@ -34,3 +34,4 @@
 [] Add file/functions to handle the csv file reading, like total amount of days, total hours, comp time etc.
 [] Add check for datafiles, and if there are none, ask user to create one.
 [] Add easier addition for options in the menu, like make a list of the options with their respective commands and string outputs, isntead of the bloated shit I have now.
+[] Fix manual end entry, now it saves the amount of hours that are logged for a different start date. 
