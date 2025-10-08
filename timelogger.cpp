@@ -9,9 +9,9 @@ namespace fs = std::filesystem;
 
 fs::path DATA_DIRECTORY = "log-branch/datafiles";
 
-void confirm_directory(const string directory){
+void confirm_directory(const std::string directory){
     if(!fs::exists(directory)){
-        cout << "No directory found. Creating new directory... \n";
+        std::cout << "No directory found. Creating new directory... \n";
         if (fs::create_directory(directory)) {
             std::cout << "Directory created: " << directory << "\n";
         }
@@ -20,9 +20,9 @@ void confirm_directory(const string directory){
 
 
 
-atomic<bool> quit(false);
+std::atomic<bool> quit(false);
 
-string csv_file = "work_hours.csv";
+std::string csv_file = "work_hours.csv";
 
 
 // ofstream = write data to file
@@ -31,7 +31,7 @@ string csv_file = "work_hours.csv";
 /* int test_gui(int argc, char **argv){
     GUI gui(250, 100, "Timer App");
     gui.button->callback([](Fl_Widget*, void*){
-        cout << "Start clicked! " << endl;
+        std::cout << "Start clicked! " << endl;
     });
     gui.show(argc, argv);
     return Fl::run();
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
     get_current_worked();
     
     if(argc >= 2){
-        string cmd = argv[1];
+        std::string cmd = argv[1];
         if (cmd == "start") start_calculator();
         else if (cmd == "end") end_calculator();
         else if (cmd == "break") break_start();
@@ -64,12 +64,12 @@ int main(int argc, char* argv[]){
 }
 
 
-vector <string> menu_options = {};
+std::vector <std::string> menu_options = {};
 
 
 void show_menu(){
     //current_log_file();
-    cout << "\rFollowing commands available:\n " 
+    std::cout << "\rFollowing commands available:\n " 
          //<< "> TIME TRACKING: \n"
          << "1. Start  (s) \n "
          << "2. End    (e) \n "
@@ -84,9 +84,9 @@ void show_menu(){
          << "Input a command: \n ";
 
     int command;
-    string input;
+    std::string input;
 
-    cin >> input;
+    std::cin >> input;
 
 
     if(input == "1" || input == "s" ){
@@ -145,19 +145,19 @@ int switch_command(const int &command){
         case 8:
             return 0;
         default:
-            cout << "\rCancelled or no command given.";
+            std::cout << "\rCancelled or no command given.";
             break;
         }
     return 0;
 }
 
 /* void current_log_file(){
-    cout << "Current log file in use: " << DATA_FILE << "\n";
+    std::cout << "Current log file in use: " << DATA_FILE << "\n";
 } */
 
 
 bool check_session_started(){
-    ifstream start_state_file(".start_state.txt");
+    std::ifstream start_state_file(".start_state.txt");
 
     if(!start_state_file){
         return false;
@@ -186,7 +186,7 @@ void get_current_worked(){
     long start_state = read_from_file(".start_state.txt");
 
     // Read from file
-    ifstream break_time_file(".break_total.txt");
+    std::ifstream break_time_file(".break_total.txt");
 
     long break_total = 0;
 
@@ -205,36 +205,36 @@ void get_current_worked(){
     long hours = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
 
-    cout << "+---------------------------------------------------------------------------+ \n";
-    cout << "\r| Started: " << put_time(localtime(&start_state), "%H:%M \n");
-    cout << "\r| Total time worked (break subtracted): "  << hours << " hours and "<< minutes << " minutes." << "\n";
-    cout << "\r| Break total: " << (break_hours < 10 ? "0" : "") << break_hours << ":" << (break_minutes < 10 ? "0" : "") <<  break_minutes << "\n";
-    cout << "+---------------------------------------------------------------------------+\n";
+    std::cout << "+---------------------------------------------------------------------------+ \n";
+    std::cout << "\r| Started: " << std::put_time(localtime(&start_state), "%H:%M \n");
+    std::cout << "\r| Total time worked (break subtracted): "  << hours << " hours and "<< minutes << " minutes." << "\n";
+    std::cout << "\r| Break total: " << (break_hours < 10 ? "0" : "") << break_hours << ":" << (break_minutes < 10 ? "0" : "") <<  break_minutes << "\n";
+    std::cout << "+---------------------------------------------------------------------------+\n";
 }
 
-void manual_entry(const string &filename){
+void manual_entry(const std::string &filename){
 
 
-    tuple<int, int> hhmm = parse_entry();
+    std::tuple<int, int> hhmm = parse_entry();
 
     // get today's date
     time_t now = time(nullptr);
     tm local_tm = *localtime(&now);
 
     // overwrite hour/minute/second
-    local_tm.tm_hour = get<0>(hhmm);
-    local_tm.tm_min = get<1>(hhmm);
+    local_tm.tm_hour = std::get<0>(hhmm);
+    local_tm.tm_min = std::get<1>(hhmm);
     local_tm.tm_sec = 0;
 
     // convert to epoch seconds
     time_t started_time = mktime(&local_tm);
 
-    ofstream start_file(filename); 
+    std::ofstream start_file(filename); 
 
-    string message = "The time entered is: " + to_string(get<0>(hhmm)) + ":" + to_string(get<1>(hhmm)) + ". \n";
+    std::string message = "The time entered is: " + std::to_string(std::get<0>(hhmm)) + ":" + std::to_string(std::get<1>(hhmm)) + ". \n";
 
     if(!confirm(message)){
-        cout << "Input not saved";
+        std::cout << "Input not saved";
         return;
     }
 
@@ -244,7 +244,7 @@ void manual_entry(const string &filename){
 void manual_session_entry(){
 
     if(check_session_started()){
-        cout << "Warning. Session already logged as started. Proceeding will overwrite.\n";
+        std::cout << "Warning. Session already logged as started. Proceeding will overwrite.\n";
     }
 
     manual_entry(".start_state.txt");
@@ -253,7 +253,7 @@ void manual_session_entry(){
 
 void manual_end_entry(){
     if(!check_session_started()){
-        throw runtime_error("Session not started. Cannot end non-started session.\n");
+        throw std::runtime_error("Session not started. Cannot end non-started session.\n");
     }
 
     manual_entry(".end_state.txt");
@@ -262,10 +262,10 @@ void manual_end_entry(){
 
 void manual_break_entry(){
 
-    tuple <int, int> hhmm = parse_entry();
+    std::tuple <int, int> hhmm = parse_entry();
 
-    long hh = get<0>(hhmm);
-    long mm = get<1>(hhmm);
+    long hh = std::get<0>(hhmm);
+    long mm = std::get<1>(hhmm);
 
 
     long secs = calculate_secs_from_hour_min(hh,mm);
@@ -274,10 +274,10 @@ void manual_break_entry(){
 
     tot += secs;
 
-    string message = "The time entered is: " + to_string(hh) + ":" + to_string(mm) + ". \n";
+    std::string message = "The time entered is: " + std::to_string(hh) + ":" + std::to_string(mm) + ". \n";
 
     if(!confirm(message)){
-        cout << "Break time not saved\n";
+        std::cout << "Break time not saved\n";
         return;
     } 
     
@@ -285,8 +285,8 @@ void manual_break_entry(){
 
 }
 
-tuple<int, int> read_epoch_secs_convert_to_hhmm(const string &filename){
-    ifstream file(filename);
+std::tuple<int, int> read_epoch_secs_convert_to_hhmm(const std::string &filename){
+    std::ifstream file(filename);
 
     time_t epoch = 0;
 
@@ -298,37 +298,37 @@ tuple<int, int> read_epoch_secs_convert_to_hhmm(const string &filename){
     int hour = timeinfo->tm_hour;
     int minute = timeinfo->tm_min;
 
-    return make_tuple(hour, minute);
+    return std::make_tuple(hour, minute);
 }
 
-tuple<int, int> parse_entry(){
+std::tuple<int, int> parse_entry(){
     int hh = 00;
     int mm = 00;
     char colon = ':';
-    string hhmm;
+    std::string hhmm;
     
-    cout << "Input with format: HH:MM \n";
-    cin >> hhmm;
+    std::cout << "Input with format: HH:MM \n";
+    std::cin >> hhmm;
 
-    stringstream ss(hhmm);
+    std::stringstream ss(hhmm);
     ss >> hh >> colon >> mm;
 
 /*     if (!(ss >> hh >> colon >> mm) || colon != ':') {
         throw runtime_error("Invalid format, expected HH:MM");
     } */
     if (hh < 0 || hh > 23) {
-        throw runtime_error("Hour must be 0–23");
+        throw std::runtime_error("Hour must be 0–23");
     }
     if (mm < 0 || mm > 59) {
-        throw runtime_error("Minute must be 0–59");
+        throw std::runtime_error("Minute must be 0–59");
     }
 
-    return make_tuple(hh, mm);
+    return std::make_tuple(hh, mm);
 }
 
 // Read the epoch time (seconds) from a file.
-long read_from_file(const string &filename){
-    ifstream file(filename);
+long read_from_file(const std::string &filename){
+    std::ifstream file(filename);
 
     long tot = 0;
     if(file.is_open()){
@@ -339,11 +339,11 @@ long read_from_file(const string &filename){
 
 }
 
-void save_to_file(const string &filename, int tot){
+void save_to_file(const std::string &filename, int tot){
     
-    ofstream file(filename);
+    std::ofstream file(filename);
     if(!file){
-        throw runtime_error("Could not open file for writing");
+        throw std::runtime_error("Could not open file for writing");
     }
     file << tot;
     file.close();
@@ -352,16 +352,16 @@ void save_to_file(const string &filename, int tot){
 
 
 time_t get_current_time(){
-    auto now_f = system_clock::now();
-    time_t now_c = system_clock::to_time_t(now_f); // Now first
+    auto now_f = std::chrono::system_clock::now();
+    time_t now_c = std::chrono::system_clock::to_time_t(now_f); // Now first
 
     return now_c;
 }
 
 void input_thread(){
-    string s;
+    std::string s;
 
-    while(cin >> s){
+    while(std::cin >> s){
         if (s == "q"){
             quit = true;
             break;
@@ -376,9 +376,9 @@ int break_start(){
 
     save_to_file(".break_start.txt", now_c);
 
-    thread t(input_thread); 
+    std::thread t(input_thread); 
 
-    cout << "Break started. Press q to cancel the break. \n";
+    std::cout << "Break started. Press q to cancel the break. \n";
 
 
     int total = 0;
@@ -389,11 +389,11 @@ int break_start(){
         int minutes = calculate_mins_from_seconds(elapsed);
         int seconds = elapsed % 60;
 
-        cout << "\rOn break: " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << ":" 
-        << (seconds < 10 ? "0" : "") << seconds << "   >" << flush;
+        std::cout << "\rOn break: " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << ":" 
+        << (seconds < 10 ? "0" : "") << seconds << "   >" << std::flush;
 
         total++;
-        this_thread::sleep_for(chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     }
     t.join();
@@ -420,7 +420,7 @@ int break_stop(){
 
     // Add to the total
     int total = 0;
-    ifstream totalFile(".break_total.txt");
+    std::ifstream totalFile(".break_total.txt");
     if(totalFile) {
         // If we already have a file, assume it has break already logged, read to total
         totalFile >> total;
@@ -432,27 +432,27 @@ int break_stop(){
 
     
 
-    cout << "Break ended. Summary: " << hours << setw(2) << setfill('0') << " hours, " 
-                                     << minutes << setw(2) << setfill('0') << " minutes and " 
+    std::cout << "Break ended. Summary: " << hours << std::setw(2) << std::setfill('0') << " hours, " 
+                                     << minutes << std::setw(2) << std::setfill('0') << " minutes and " 
                                      << remains << " seconds. \nSave break period? (yes/no) \n"
                                      << "or e for edit \n";
 
     
-    string command;
-    cin >> command;
+    std::string command;
+    std::cin >> command;
 
     if(command == "e"){
         manual_break_entry();
     }
 
     if(command == "no"){
-        cout << "Break period not saved. \n";
+        std::cout << "Break period not saved. \n";
         return 0;
     }
 
-    cout << "Break period saved. \n";
+    std::cout << "Break period saved. \n";
 
-    ofstream saveTotal(".break_total.txt");
+    std::ofstream saveTotal(".break_total.txt");
     saveTotal << total;
     saveTotal.close();
 
@@ -464,7 +464,7 @@ int break_stop(){
 void start_calculator(){
 
     if(check_session_started()){
-        cerr << "\rSession already started! \n";
+        std::cerr << "\rSession already started! \n";
         return;
     }
 
@@ -472,13 +472,13 @@ void start_calculator(){
 
     save_to_file(".start_state.txt", now_c);
 
-    cout << "Session started! Time recorded: " << put_time(localtime(&now_c), "%H:%M \n");
+    std::cout << "Session started! Time recorded: " << std::put_time(localtime(&now_c), "%H:%M \n");
 
 }
 
 void end_calculator(){
     if(!check_session_started()){
-        throw runtime_error("Session not started, cannot end time \n"); 
+        throw std::runtime_error("Session not started, cannot end time \n"); 
         return;
     }
     
@@ -509,16 +509,16 @@ void save_to_log(){
 /* 
     ///////////////// UNDER CONSTRUCTION ////////////////////
     string note = "";
-    cout << "(Optional): Add note. (c) to ignore. \n";
-    getline(std::cin, note);
+    std::std::cout << "(Optional): Add note. (c) to ignore. \n";
+    getline(std::std::cin, note);
     ///////////////////////////////////////////////////
 
      */
-    string datafile = file_to_log_data();
-    cout << datafile + " selected \n";
-    ofstream log_file(datafile, ios::app); // append mode
+    std::string datafile = file_to_log_data();
+    std::cout << datafile + " selected \n";
+    std::ofstream log_file(datafile, std::ios::app); // append mode
 
-    string logging_record = format_record(
+    std::string logging_record = format_record(
         start_state, 
         end_state, 
         calculate_hour_from_seconds(break_total), 
@@ -531,14 +531,14 @@ void save_to_log(){
 
 
 
-    string message =  "NOTE: The following data will be written and stored: " + logging_record 
+    std::string message =  "NOTE: The following data will be written and stored: " + logging_record 
         + "to: " + datafile + "\n" + "Save this record? \n";
 
     if(confirm(message)) {
-        cout << "Record stored. \n";
+        std::cout << "Record stored. \n";
         log_file << logging_record;
     } else {
-        cout << "Record not stored! \n";
+        std::cout << "Record not stored! \n";
     }
     
     log_file.close();
@@ -548,29 +548,29 @@ void save_to_log(){
     return;
 }
 
-string format_record(time_t start_state, time_t end_state, long  break_total_hour,
+std::string format_record(time_t start_state, time_t end_state, long  break_total_hour,
                      long break_total_mins, long worked_hours,
                      long worked_mins, long total_work_time_hours, long total_work_time_mins) 
 {
-    ostringstream oss;
-    oss << put_time(localtime(&end_state), "%Y-%m-%d")                                       << ","  
-        << put_time(localtime(&start_state), "%H:%M")                                        << ","  
-        << put_time(localtime(&end_state), "%H:%M")                                          << ","  
-        << break_total_hour       << ":" << setw(2) << setfill('0') << break_total_mins      << ","  
-        << worked_hours           << ":" << setw(2) << setfill('0') << worked_mins           << "," 
-        << total_work_time_hours  << ":" << setw(2) << setfill('0') << total_work_time_mins  << "\n";  
+    std::ostringstream oss;
+    oss << std::put_time(localtime(&end_state), "%Y-%m-%d")                                       << ","  
+        << std::put_time(localtime(&start_state), "%H:%M")                                        << ","  
+        << std::put_time(localtime(&end_state), "%H:%M")                                          << ","  
+        << break_total_hour       << ":" << std::setw(2) << std::setfill('0') << break_total_mins      << ","  
+        << worked_hours           << ":" << std::setw(2) << std::setfill('0') << worked_mins           << "," 
+        << total_work_time_hours  << ":" << std::setw(2) << std::setfill('0') << total_work_time_mins  << "\n";  
         //<< note << "\n";
 
     return oss.str();
 }
 
-void clear_file(const string& filename) {
-    ofstream file(filename, ios::trunc); // open in truncate mode
+void clear_file(const std::string& filename) {
+    std::ofstream file(filename, std::ios::trunc); // open in truncate mode
 }
 
 void clear_temp_files(){
 
-    string message = "Clear temporary files? Current data will be erased! \n";
+    std::string message = "Clear temporary files? Current data will be erased! \n";
 
     if(confirm(message)){
         clear_file(".break_start.txt");
@@ -578,21 +578,21 @@ void clear_temp_files(){
         clear_file(".start_state.txt");
         clear_file(".end_state.txt");
 
-        cout << "Temporary files cleared! \n";
+        std::cout << "Temporary files cleared! \n";
 
         return;
     }
-    cout << "Temporary files not cleared! \n";
+    std::cout << "Temporary files not cleared! \n";
 }
 
-bool confirm(const string& message) {
-    cout << message << "(yes/ENTER to accept, no to cancel): \n";
+bool confirm(const std::string& message) {
+    std::cout << message << "(yes/ENTER to accept, no to cancel): \n";
 
-    string input;
-    //cin.ignore(numeric_limits<streamsize>::max(), '\n');  
-    //getline(cin, input);
+    std::string input;
+    //std::cin.ignore(numeric_limits<streamsize>::max(), '\n');  
+    //getline(std::cin, input);
 
-    cin >> input;
+    std::cin >> input;
     // lowercase input
     transform(input.begin(), input.end(), input.begin(), ::tolower);
 
@@ -601,8 +601,8 @@ bool confirm(const string& message) {
     }
     return false; // anything else = reject
 }
-vector<string> read_from_directory(const string& path) {
-    vector<string> files;
+std::vector<std::string> read_from_directory(const std::string& path) {
+    std::vector<std::string> files;
     if (path.empty())
         return files;
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
@@ -611,27 +611,27 @@ vector<string> read_from_directory(const string& path) {
     return files;
 }
 
-bool check_name(const string &name){
+bool check_name(const std::string &name){
     int max = 30;
     int min = 5;
     if(name.size() >= 30){
-        cout << "Too many characters. Maximum input: " + to_string(max) + "\n Your input: " + to_string(name.size()) << endl;
+        std::cout << "Too many characters. Maximum input: " + std::to_string(max) + "\n Your input: " + std::to_string(name.size()) << std::endl;
         return false;
     }
     if(name.size() < 6){ 
-        cout << "Too few characters. Minimum input: " +  to_string(min) + "\n Your input: " + to_string(name.size()) << endl;        
+        std::cout << "Too few characters. Minimum input: " +  std::to_string(min) + "\n Your input: " + std::to_string(name.size()) << std::endl;        
         return false; 
     }
     return true;
 }
 
 int create_logging_file(){
-    cout << "Please give a name for the logging file, minimum 5 characters, max 30 characters: " << endl; 
-    string name;
-    cin >> name;
+    std::cout << "Please give a name for the logging file, minimum 5 characters, max 30 characters: " << std::endl; 
+    std::string name;
+    std::cin >> name;
     while(!check_name(name)){
-        cout << "Try again: " << endl;
-        cin >> name;
+        std::cout << "Try again: " << std::endl;
+        std::cin >> name;
     }
 
     fs::path destination = fs::path(DATA_DIRECTORY) / (name + ".csv");
@@ -642,40 +642,40 @@ int create_logging_file(){
     // Create the file at destination
     std::ofstream file(destination);
     if (!file) {
-        cerr << "Failed to create file: " << destination << "\n";
+        std::cerr << "Failed to create file: " << destination << "\n";
         return 1;
     }
 
     file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min \n"; 
     file.close();
 
-    cout << "Created file: " << destination << "\n";
+    std::cout << "Created file: " << destination << "\n";
 
     return 0;
 }
 
 
-string file_to_log_data(){
+std::string file_to_log_data(){
     
     if(read_from_directory(DATA_DIRECTORY).empty()){
-        cout << "No logging files found. Proceed to create one?\n";
-        string choice;
-        cin >> choice;
+        std::cout << "No logging files found. Proceed to create one?\n";
+        std::string choice;
+        std::cin >> choice;
         if(confirm(choice)){
             create_logging_file();
         }
     }
 
-    vector<string> datafiles = read_from_directory(DATA_DIRECTORY);
+    std::vector<std::string> datafiles = read_from_directory(DATA_DIRECTORY);
 
-    cout << "Files in datadirectory for logging: \n";
+    std::cout << "Files in datadirectory for logging: \n";
     for(int i = 0; i < datafiles.size();  i++){
-        cout << to_string(i) << ". " << datafiles[i] << endl;
+        std::cout << std::to_string(i) << ". " << datafiles[i] << std::endl;
     } 
 
-    cout << "Select which logfile to store the data. \n";
+    std::cout << "Select which logfile to store the data. \n";
     int input;
-    cin >> input;
+    std::cin >> input;
 
     // use filesystem::path
     fs::path fullpath = fs::path(DATA_DIRECTORY) / datafiles[input];
