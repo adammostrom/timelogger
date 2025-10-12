@@ -2,48 +2,44 @@
 #include "utils.h"
 #include <filesystem>
 #include <vector>
-//#include "gui.h"
-// #include "gui.h"
 
-namespace fs = std::filesystem;
 
-fs::path DATA_DIRECTORY = "log-branch/datafiles";
+/**
+ * ofstream = write data to file
+ * ifstream = read data from file
+ */
 
+std::filesystem::path DATA_DIRECTORY = "log-branch/datafiles";
+
+std::atomic<bool> quit(false);
+
+
+/* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
 void confirm_directory(const std::string directory){
-    if(!fs::exists(directory)){
+    if(!std::filesystem::exists(directory)){
         std::cout << "No directory found. Creating new directory... \n";
-        if (fs::create_directory(directory)) {
+        if (std::filesystem::create_directory(directory)) {
             std::cout << "Directory created: " << directory << "\n";
         }
     }
 }
 
 
-
-std::atomic<bool> quit(false);
-
-std::string csv_file = "work_hours.csv";
-
-
-// ofstream = write data to file
-// ifstream = read data from file
-
-/* int test_gui(int argc, char **argv){
-    GUI gui(250, 100, "Timer App");
-    gui.button->callback([](Fl_Widget*, void*){
-        std::cout << "Start clicked! " << endl;
-    });
-    gui.show(argc, argv);
-    return Fl::run();
-} */
-
 int main(int argc, char* argv[]){
 
+    std::vector<Command> commands = {
+        {"Start", "s", start_calculator},
+        {"End",   "e", end_calculator},
+        {"Break", "b", break_start},
+        {"Manual start entry", "md", manual_session_entry},
+        {"Manual break entry", "mb", manual_break_entry},
+        {"Manual end entry",   "me", manual_end_entry},
+        {"Clear temporary files", "cl", clear_temp_files},
+        //{"Create new datafile", "nd", create_data_file},
+        {"Cancel", "c", [](){ std::cout << "Cancelled.\n"; }}
+    };
 
     confirm_directory(DATA_DIRECTORY);
-
-
-
 
     // Show the current time worked on start
     get_current_worked();
@@ -53,107 +49,67 @@ int main(int argc, char* argv[]){
         if (cmd == "start") start_calculator();
         else if (cmd == "end") end_calculator();
         else if (cmd == "break") break_start();
-        else show_menu();
+        else print_menu(commands);
         return 0;
     }
     
+    print_menu(commands);
+    handle_input(commands);
 
-    show_menu();
     return 0;
 
 }
 
 
-std::vector <std::string> menu_options = {};
 
 
-void show_menu(){
-    //current_log_file();
-    std::cout << "\rFollowing commands available:\n " 
-         //<< "> TIME TRACKING: \n"
-         << "1. Start  (s) \n "
-         << "2. End    (e) \n "
-         << "3. Break  (b) \n "
-         //<< "MANUAL ENTRY: \n"
-         << "4. Manual start entry  (md) \n "
-         << "5. Manual break entry  (mb) \n "
-         << "6. Manual end entry    (me) \n "
-         //<< "MAINTENANCE: \n"
-         << "7. Clear temporary files  (cl) \n "
-         << "8. Cancel                 (c)  \n "
-         << "Input a command: \n ";
 
-    int command;
+void print_menu(const std::vector<Command>& commands){
+
+    std::cout << "Following commands available:\n";
+    
+    for(int i = 0; i < commands.size(); i++){
+        std::cout << " " << std::to_string(i) + "." + commands[i].name << " (" <<commands[i].command << ")" << std::endl; 
+    }
+    
+}
+
+void handle_input(const std::vector<Command>& commands){
+
+
+    std::cout << "Input a command: \n ";
+    
     std::string input;
-
     std::cin >> input;
-
-
-    if(input == "1" || input == "s" ){
-        command = 1;
-    }
-    else if(input == "2" || input == "e" ){
-        command = 2;
-    }
-    else if(input == "3" || input == "b" ){
-        command = 3;
-    }
-    else if(input == "4" || input == "md" ){
-        command = 4;
-    }
-    else if(input == "5" || input == "mb" ){
-        command = 5;
-    }
-    else if(input == "6" || input == "me" ){
-        command = 6;
-    }
-    else if(input == "7" || input == "cl" ){
-        command = 7;
-    }
-    else if(input == "8" || input == "c" ){
-        command = 8;
-    }
-    else command = 0;
-
-    switch_command(command);
-}
-
-int switch_command(const int &command){
-        
-    switch(command) {
-        case 1:
-            start_calculator();
-            break;
-        case 2:
-            end_calculator();
-            break;
-        case 3:
-            break_start();
-            break;
-        case 4:
-            manual_session_entry();
-            break;
-        case 5:
-            manual_break_entry();
-            break;
-        case 6:
-            manual_end_entry();
-            break;
-        case 7:
-            clear_temp_files();
-            break;
-        case 8:
-            return 0;
-        default:
-            std::cout << "\rCancelled or no command given.";
-            break;
+    
+    
+    bool is_number = !input.empty() && std::all_of(input.begin(), input.end(), ::isdigit);
+    
+    
+    while(input != "q"){
+        if(is_number){
+            int index = std::stoi(input);
+    
+            if(index >= 0 || index <= commands.size()){
+                commands[index].action();
+                break;    
+            }
         }
-    return 0;
+        else{
+            for (Command c : commands){
+                if( input == c.command){
+                    c.action();
+                    break;
+                }
+                else {
+                    std::cout << "Unknown command, try again. \n";
+                    return;
+                }
+            }
+        }
+    }
 }
 
-/* void current_log_file(){
-    std::cout << "Current log file in use: " << DATA_FILE << "\n";
-} */
 
 
 bool check_session_started(){
@@ -634,7 +590,7 @@ int create_logging_file(){
         std::cin >> name;
     }
 
-    fs::path destination = fs::path(DATA_DIRECTORY) / (name + ".csv");
+    std::filesystem::path destination = std::filesystem::path(DATA_DIRECTORY) / (name + ".csv");
 
 
     confirm_directory(DATA_DIRECTORY);
@@ -678,7 +634,7 @@ std::string file_to_log_data(){
     std::cin >> input;
 
     // use filesystem::path
-    fs::path fullpath = fs::path(DATA_DIRECTORY) / datafiles[input];
+    std::filesystem::path fullpath = std::filesystem::path(DATA_DIRECTORY) / datafiles[input];
     return fullpath.string();  
 //
 }

@@ -14,6 +14,13 @@
 #include <limits> // for numeric_limits<streamsize>::max()
 #include <tuple> // Required for std::tuple
 #include <vector>
+#include <functional>
+
+struct Command {
+    std::string name;
+    std::string command;
+    std::function<void()> action;
+};
 
 
 int break_start();
@@ -23,7 +30,8 @@ time_t get_current_time();
 void start_calculator();
 void end_calculator();
 void manual_session_entry();
-void show_menu();
+void print_menu(const std::vector<Command>& commands);
+void handle_input(const std::vector<Command>& commands);
 //void current_log_file();
 
 
