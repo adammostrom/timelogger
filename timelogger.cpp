@@ -4,42 +4,29 @@
 #include <vector>
 
 
-/**
- * ofstream = write data to file
- * ifstream = read data from file
- */
 
-std::filesystem::path DATA_DIRECTORY = "log-branch/datafiles";
+std::filesystem::path DATA_DIRECTORY = "datafiles";
 
 std::atomic<bool> quit(false);
 
 
-/* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
-void confirm_directory(const std::string directory){
-    if(!std::filesystem::exists(directory)){
-        std::cout << "No directory found. Creating new directory... \n";
-        if (std::filesystem::create_directory(directory)) {
-            std::cout << "Directory created: " << directory << "\n";
-        }
-    }
-}
+std::vector<Command> commands = {
+    {"Start", "s", start_calculator},
+    {"End",   "e", end_calculator},
+    {"Break", "b", break_start},
+    {"Manual start entry", "md", manual_session_entry},
+    {"Manual break entry", "mb", manual_break_entry},
+    {"Manual end entry",   "me", manual_end_entry},
+    {"Clear temporary files", "cl", clear_temp_files},
+    //{"Create new datafile", "nd", create_data_file},
+    {"Cancel", "c", [](){ std::cout << "Cancelled.\n"; }}
+};
+
+
 
 
 int main(int argc, char* argv[]){
 
-    std::vector<Command> commands = {
-        {"Start", "s", start_calculator},
-        {"End",   "e", end_calculator},
-        {"Break", "b", break_start},
-        {"Manual start entry", "md", manual_session_entry},
-        {"Manual break entry", "mb", manual_break_entry},
-        {"Manual end entry",   "me", manual_end_entry},
-        {"Clear temporary files", "cl", clear_temp_files},
-        //{"Create new datafile", "nd", create_data_file},
-        {"Cancel", "c", [](){ std::cout << "Cancelled.\n"; }}
-    };
-
-    confirm_directory(DATA_DIRECTORY);
 
     // Show the current time worked on start
     get_current_worked();
@@ -61,15 +48,24 @@ int main(int argc, char* argv[]){
 }
 
 
+/* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
+void confirm_directory(const std::string directory){
+    if(!std::filesystem::exists(directory)){
+        std::cout << "No directory found. Creating new directory ... \n";
+        if (std::filesystem::create_directory(directory)) {
+            std::cout << "Directory created: " << directory << "\n";
+        }
+    }
+}
 
 
 
 void print_menu(const std::vector<Command>& commands){
 
-    std::cout << "Following commands available:\n";
+    std::cout << "Following commands available: \n";
     
     for(int i = 0; i < commands.size(); i++){
-        std::cout << " " << std::to_string(i) + "." + commands[i].name << " (" <<commands[i].command << ")" << std::endl; 
+        std::cout << "\t" << std::to_string(i) + "." + commands[i].name << " (" <<commands[i].command << ")" << std::endl; 
     }
     
 }
@@ -102,7 +98,7 @@ void handle_input(const std::vector<Command>& commands){
                     break;
                 }
                 else {
-                    std::cout << "Unknown command, try again. \n";
+                    std::cout << "Unknown command. \n";
                     return;
                 }
             }
@@ -187,7 +183,9 @@ void manual_entry(const std::string &filename){
 
     std::ofstream start_file(filename); 
 
-    std::string message = "The time entered is: " + std::to_string(std::get<0>(hhmm)) + ":" + std::to_string(std::get<1>(hhmm)) + ". \n";
+    std::string message = std::string("The time entered is: ") + 
+    (local_tm.tm_hour < 10 ? "0" : "") + std::to_string(local_tm.tm_hour) + ":" + 
+    (local_tm.tm_min < 10 ? "0" : "") + std::to_string(local_tm.tm_min) + ". \n";
 
     if(!confirm(message)){
         std::cout << "Input not saved";
@@ -196,6 +194,34 @@ void manual_entry(const std::string &filename){
 
     save_to_file(filename, started_time);
 }
+
+void manual_break_entry(){
+
+    std::tuple <int, int> hhmm = parse_entry();
+
+    long hh = std::get<0>(hhmm);
+    long mm = std::get<1>(hhmm);
+
+
+    long secs = calculate_secs_from_hour_min(hh,mm);
+
+    long tot = read_from_file(".break_total.txt");
+
+    tot += secs;
+                                                    
+    std::string message = std::string("The time entered is: ") + 
+    (hh < 10 ? "0" : "") + std::to_string(hh) + ":" + 
+    (mm < 10 ? "0" : "") + std::to_string(mm) + ". \n";
+
+    if(!confirm(message)){
+        std::cout << "Break time not saved\n";
+        return;
+    } 
+    
+    save_to_file(".break_total.txt", tot);
+
+}
+
 
 void manual_session_entry(){
 
@@ -216,30 +242,6 @@ void manual_end_entry(){
     save_to_log();
 }
 
-void manual_break_entry(){
-
-    std::tuple <int, int> hhmm = parse_entry();
-
-    long hh = std::get<0>(hhmm);
-    long mm = std::get<1>(hhmm);
-
-
-    long secs = calculate_secs_from_hour_min(hh,mm);
-
-    long tot = read_from_file(".break_total.txt");
-
-    tot += secs;
-
-    std::string message = "The time entered is: " + std::to_string(hh) + ":" + std::to_string(mm) + ". \n";
-
-    if(!confirm(message)){
-        std::cout << "Break time not saved\n";
-        return;
-    } 
-    
-    save_to_file(".break_total.txt", tot);
-
-}
 
 std::tuple<int, int> read_epoch_secs_convert_to_hhmm(const std::string &filename){
     std::ifstream file(filename);
@@ -269,9 +271,6 @@ std::tuple<int, int> parse_entry(){
     std::stringstream ss(hhmm);
     ss >> hh >> colon >> mm;
 
-/*     if (!(ss >> hh >> colon >> mm) || colon != ':') {
-        throw runtime_error("Invalid format, expected HH:MM");
-    } */
     if (hh < 0 || hh > 23) {
         throw std::runtime_error("Hour must be 0–23");
     }
@@ -449,6 +448,8 @@ void end_calculator(){
 }
 
 void save_to_log(){
+
+    confirm_directory(DATA_DIRECTORY);
 
     long break_total = read_from_file(".break_total.txt");
 

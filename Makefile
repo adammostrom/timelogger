@@ -24,11 +24,3 @@ run:
 gui:
 	@g++ gui.cpp -o gui -lfltk
 	@./gui
-
-log:
-	cd log-branch && \
-	git checkout log && \
-	git fetch && \
-	git add . && \
-	git commit -m "automatic push" && \
-	git push

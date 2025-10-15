@@ -11,11 +11,16 @@
 #include <atomic>
 #include <algorithm>
 #include <filesystem>
-#include <limits> // for numeric_limits<streamsize>::max()
-#include <tuple> // Required for std::tuple
+#include <limits> 
+#include <tuple> 
 #include <vector>
 #include <functional>
 
+/*
+Datastructures:
+*/ 
+
+// Command structure for adding and editing commands in the start menu.
 struct Command {
     std::string name;
     std::string command;

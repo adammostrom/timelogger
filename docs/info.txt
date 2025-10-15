@@ -1,0 +1,5 @@
+
+/**
+ * ofstream = write data to file
+ * ifstream = read data from file
+ */
