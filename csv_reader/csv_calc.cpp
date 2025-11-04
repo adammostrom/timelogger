@@ -1,5 +1,5 @@
-#include "timelogger.h"
-#include "utils.h"
+#include "../timelogger.h"
+#include "../utils.h"
 #include <filesystem>
 #include <vector>
 
@@ -11,27 +11,32 @@ std::filesystem::path DATA_DIRECTORY = "datafiles";
 
 /// Read total time from the datafile
 
-int calculate_total(){
+void calculate_total(){
         // File pointer
     std::fstream fin;
 
     // Open an existing file
-    fin.open("datafiles/work_hours.csv", std::ios::in);
-
+    fin.open("work_hours.csv", std::ios::in);
 
     // Read the Data from the file
     // as String Vector
     std::vector<std::string> row;
     std::string line, word, temp;
 
-        while (fin >> temp)
+    if(!fin.is_open()){
+        std::cout << "Failed to open file";
+    }
+
+    while (fin >> temp)
     {
-
+        
         row.clear();
-
+        
         // read an entire row and
         // store it in a string variable 'line'
         getline(fin, line);
+        
+        std::cout << line;
 
         // used for breaking words
         std::stringstream s(line);
@@ -43,7 +48,20 @@ int calculate_total(){
             // add all the column data
             // of a row to a vector
             row.push_back(word);
+            std::cout << word;
         }
     }
+
     fin.close();
+    for(std::string s : row){
+        std::cout << s;
+    }
+    if(row.empty()){
+        std::cout << "List Empty";
+    }
+}
+
+int main(){
+    std::cout << "Hello";
+    calculate_total();
 }
