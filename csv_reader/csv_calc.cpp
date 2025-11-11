@@ -10,46 +10,82 @@
 
 std::filesystem::path DATA_DIRECTORY = "datafiles";
 
+const int AVERAGE_HOUR_DAY = 8;
+
 /// Read total time from the datafile
-void calculate_total(){
+int calculate_total_entries(){
     std::filesystem::path p = "work_hours.csv";
     std::ifstream fin(p.string());
     if(!fin.is_open()){
         std::cerr << "Failed to open file: " << p << '\n';
-        return;
+        return 0;
     }
 
     std::vector<std::string> row;
-    std::string line, word;
+    std::string line;
+
+    int count = 0;
     bool first_line = true;
 
     while (std::getline(fin, line)) {
+    
         if (first_line) { // skip header
             first_line = false;
             continue;
         }
         if (line.empty()) continue;
-
+        
         row.clear();
-        std::stringstream s(line);
-        while (std::getline(s, word, ',')) {
-            row.push_back(word);
-        }
 
-        // Example: print parsed columns for the line
-        for (size_t i = 0; i < row.size(); ++i) {
-            std::cout << "[" << i << "]=" << row[i] << " ";
-        }
-        std::cout << '\n';
+        count++;
     }
 
     fin.close();
     if (row.empty()) {
         std::cout << "Last read row is empty (or file had no data)\n";
     }
+    std::cout << std::to_string(count)<< "\n";
+
+    return count;
 }
+
+void compute_total(int total_entries){
+
+    std::filesystem::path p = ".total_worked.txt";
+    std::ifstream file(p.string());
+    if(!file.is_open()){
+        std::cerr << "Failed to open file: " << p << '\n';
+        return;
+    }
+
+    double total = 0;
+    
+    // Save total amount of seconds to total.
+    // use: read_from_file
+    file >> total; 
+
+    // Total hours = total_entries * AVERAGE_HOUR_DAY
+    
+    double total_seconds = (total_entries * AVERAGE_HOUR_DAY) * 3600;
+
+    double difference_seconds = total - total_seconds;
+
+    int sign = (difference_seconds < 0) ? -1 : 1;
+    double totalSecondsAbs = std::abs(difference_seconds);
+
+    int hours = static_cast<int>(totalSecondsAbs / 3600);
+    int minutes = static_cast<int>((totalSecondsAbs - hours * 3600) / 60);
+
+    if (sign < 0) hours = -hours;
+
+    std::cout << hours << ":" << (minutes < 10 ? "0" : "") << minutes << "\n";
+
+}
+
 
 int main(){
     std::cout << "Hello\n";
-    calculate_total();
+    int rows = calculate_total_entries();
+
+    compute_total(rows);
 }
