@@ -27,7 +27,7 @@
 [] Fix the note taking part (make function, clean it of commas, make a safety check for input, a cancel command for skipping notetaking).
  [] Add smart tracker to calculate max amount of break or how many more hours to work to fit 8 hours (or however many you wish to work), maybe this can be done with some kind of countdown
 [] Add more functionality for the csv files to parse data and get information
-[] FIx the printout confirmation "time entered" as it now states "8:0" for "08:00"
+[X] FIx the printout confirmation "time entered" as it now states "8:0" for "08:00"
 [] Add file/functions to handle the csv file reading, like total amount of days, total hours, comp time etc.
 [] Add easier addition for options in the menu, like make a list of the options with their respective commands and string outputs, isntead of the bloated shit I have now.
 [] Fix manual end entry, now it saves the amount of hours that are logged for a different start date. 

@@ -15,6 +15,10 @@
 #include <tuple> 
 #include <vector>
 #include <functional>
+#include <string_view>
+
+#include "csv_reader.hpp"
+#include "utils.h"
 
 /*
 Datastructures:
@@ -27,6 +31,10 @@ struct Command {
     std::function<void()> action;
 };
 
+
+//// WORK IN PROGRESS ////
+
+void logged_data_overview();    
 
 int break_start();
 int break_stop();
@@ -51,6 +59,9 @@ bool confirm_logging(const std::string& record);
 void clear_temp_files();
 bool check_session_started();
 bool confirm(const std::string& message);
+
+
+void show_status(const long &start_state, int work_h, int work_m, int break_h, int break_m);
 
 int switch_command(const int &command);
 
@@ -80,5 +91,7 @@ std::tuple<time_t, time_t> get_started_time();
 int test_gui(int argc, char **argv);
 
 void manual_entry(const std::string &filename);
+
+
 
 #endif TIMELOGGER_HPP

@@ -18,7 +18,7 @@ commands:
 run:
 #	git checkout log;
 #	git pull;
-	@g++ timelogger.cpp utils.cpp -o timelogger;
+	@g++ timelogger.cpp utils.cpp csv_reader.cpp -o timelogger --verbose;
 	@./timelogger
 
 gui:

@@ -1,20 +1,10 @@
-// ...existing code...
-#include "../timelogger.h"
-#include "../utils.h"
-#include <filesystem>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-
-std::filesystem::path DATA_DIRECTORY = "datafiles";
+#include "csv_reader.hpp"
 
 const int AVERAGE_HOUR_DAY = 8;
 
 /// Read total time from the datafile
 int calculate_total_entries(){
-    std::filesystem::path p = "work_hours.csv";
+    std::filesystem::path p = WORK_HOURS;
     std::ifstream fin(p.string());
     if(!fin.is_open()){
         std::cerr << "Failed to open file: " << p << '\n';
@@ -49,9 +39,11 @@ int calculate_total_entries(){
     return count;
 }
 
-void compute_total(int total_entries){
+void compute_total(){
 
-    std::filesystem::path p = ".total_worked.txt";
+    int total_entries = calculate_total_entries();
+
+    std::filesystem::path p = Files::LoggedTotal.data();
     std::ifstream file(p.string());
     if(!file.is_open()){
         std::cerr << "Failed to open file: " << p << '\n';
@@ -80,12 +72,4 @@ void compute_total(int total_entries){
 
     std::cout << hours << ":" << (minutes < 10 ? "0" : "") << minutes << "\n";
 
-}
-
-
-int main(){
-    std::cout << "Hello\n";
-    int rows = calculate_total_entries();
-
-    compute_total(rows);
 }

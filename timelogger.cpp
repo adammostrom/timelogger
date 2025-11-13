@@ -1,14 +1,7 @@
-#include "timelogger.h"
-#include "utils.h"
-#include <filesystem>
-#include <vector>
+#include "timelogger.hpp"
 
-
-
-std::filesystem::path DATA_DIRECTORY = "datafiles";
 
 std::atomic<bool> quit(false);
-
 
 std::vector<Command> commands = {
     {"Start", "s", start_calculator},
@@ -18,6 +11,7 @@ std::vector<Command> commands = {
     {"Manual break entry", "mb", manual_break_entry},
     {"Manual end entry",   "me", manual_end_entry},
     {"Clear temporary files", "cl", clear_temp_files},
+    {"Logged data overview", "o", logged_data_overview},
     //{"Create new datafile", "nd", create_data_file},
     {"Cancel", "c", [](){ std::cout << "Cancelled.\n"; }}
 };
@@ -48,6 +42,11 @@ int main(int argc, char* argv[]){
 }
 
 
+void logged_data_overview(){
+    compute_total();
+}
+
+
 /* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
 void confirm_directory(const std::string directory){
     if(!std::filesystem::exists(directory)){
@@ -65,7 +64,7 @@ void print_menu(const std::vector<Command>& commands){
     std::cout << "Following commands available: \n";
     
     for(int i = 0; i < commands.size(); i++){
-        std::cout << "\t" << std::to_string(i) + "." + commands[i].name << " (" <<commands[i].command << ")" << std::endl; 
+        std::cout << "\t" << "[" << std::to_string(i) << "]" << "." + commands[i].name << " (" << commands[i].command << ")" << std::endl; 
     }
     
 }
@@ -73,7 +72,7 @@ void print_menu(const std::vector<Command>& commands){
 void handle_input(const std::vector<Command>& commands){
 
 
-    std::cout << "Input a command: \n ";
+    std::cout << "> Enter command: _ ";
     
     std::string input;
     std::cin >> input;
@@ -83,25 +82,29 @@ void handle_input(const std::vector<Command>& commands){
     
     
     while(input != "q"){
+
+    bool found = false;
+        
         if(is_number){
             int index = std::stoi(input);
     
-            if(index >= 0 || index <= commands.size()){
+            if(index >= 0 && index <= commands.size()){
                 commands[index].action();
-                break;    
+                return;    
             }
         }
-        else{
+        else {
             for (Command c : commands){
                 if( input == c.command){
                     c.action();
-                    break;
-                }
-                else {
-                    std::cout << "Unknown command. \n";
+                    found = true;
                     return;
                 }
             }
+        }
+        if(!found){
+            std::cout << "Unknown command. \n";
+            return;
         }
     }
 }
@@ -109,7 +112,7 @@ void handle_input(const std::vector<Command>& commands){
 
 
 bool check_session_started(){
-    std::ifstream start_state_file(".start_state.txt");
+    std::ifstream start_state_file(Files::StartState.data());
 
     if(!start_state_file){
         return false;
@@ -135,10 +138,10 @@ void get_current_worked(){
         return;
     }
 
-    long start_state = read_from_file(".start_state.txt");
+    long start_state = read_from_file(Files::StartState.data());
 
     // Read from file
-    std::ifstream break_time_file(".break_total.txt");
+    std::ifstream break_time_file(Files::BreakTotal.data());
 
     long break_total = 0;
 
@@ -157,11 +160,17 @@ void get_current_worked(){
     long hours = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
 
-    std::cout << "+---------------------------------------------------------------------------+ \n";
-    std::cout << "\r| Started: " << std::put_time(localtime(&start_state), "%H:%M \n");
-    std::cout << "\r| Total time worked (break subtracted): "  << hours << " hours and "<< minutes << " minutes." << "\n";
-    std::cout << "\r| Break total: " << (break_hours < 10 ? "0" : "") << break_hours << ":" << (break_minutes < 10 ? "0" : "") <<  break_minutes << "\n";
-    std::cout << "+---------------------------------------------------------------------------+\n";
+    show_status(start_state, hours, minutes, break_hours, break_minutes);
+}
+
+void show_status(const long &start_state, int work_h, int work_m, int break_h, int break_m){
+    std::cout << "\033[1;36m"  // bold cyan
+              << "┌──────────────────────────────────────────┐\n"
+              << "│ Started: " << std::put_time(localtime(&start_state), "%H:%M \n") << std::string(35 - 10, ' ') << "│\n"
+              << "│ Worked: " << work_h << "h " << work_m << "m"
+              << std::string(29 - (std::to_string(work_h).size() + std::to_string(work_m).size()), ' ') << "│\n"
+              << "│ Breaks: " << (break_h < 10 ? "0" : "") << break_h << ":" << (break_m < 10 ? "0" : "") <<  break_m << "\n"
+              << "└──────────────────────────────────────────┘\033[0m\n";  // reset color
 }
 
 void manual_entry(const std::string &filename){
@@ -294,12 +303,24 @@ long read_from_file(const std::string &filename){
 
 }
 
+// Read the old value first, then add the new one.
 void save_to_file(const std::string &filename, int tot){
+
+    int old_value = 0;
+
+    std::ifstream infile(filename);
+    if(!infile){
+        throw std::runtime_error("Could not open file for writing");
+    }
+
+    infile >> old_value;
+    infile.close();
     
     std::ofstream file(filename);
     if(!file){
         throw std::runtime_error("Could not open file for writing");
     }
+
     file << tot;
     file.close();
 }
@@ -494,6 +515,7 @@ void save_to_log(){
     if(confirm(message)) {
         std::cout << "Record stored. \n";
         log_file << logging_record;
+        //save_to_file(".total_worked.txt", total_work_time);
     } else {
         std::cout << "Record not stored! \n";
     }
