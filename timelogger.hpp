@@ -94,4 +94,4 @@ void manual_entry(const std::string &filename);
 
 
 
-#endif TIMELOGGER_HPP
+#endif
