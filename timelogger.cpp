@@ -43,7 +43,7 @@ int main(int argc, char* argv[]){
 
 
 void logged_data_overview(){
-    compute_total();
+    print_total_logged_status();
 }
 
 
@@ -495,6 +495,10 @@ void save_to_log(){
     std::string datafile = file_to_log_data();
     std::cout << datafile + " selected \n";
     std::ofstream log_file(datafile, std::ios::app); // append mode
+
+
+    // Append the total 
+    save_to_file(Files::LoggedTotal.data(), total_work_time);
 
     std::string logging_record = format_record(
         start_state, 

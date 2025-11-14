@@ -31,10 +31,6 @@ int calculate_total_entries(){
     }
 
     fin.close();
-    if (row.empty()) {
-        std::cout << "Last read row is empty (or file had no data)\n";
-    }
-    std::cout << std::to_string(count)<< "\n";
 
     return count;
 }
@@ -70,6 +66,14 @@ void compute_total(){
 
     if (sign < 0) hours = -hours;
 
-    std::cout << hours << ":" << (minutes < 10 ? "0" : "") << minutes << "\n";
+    std::cout << "Hours: " << hours  << " Minutes: " << (minutes < 10 ? "0" : "") << minutes << "\n";
 
+}
+
+void print_total_logged_status(){
+    std::cout << "Total entries in " << WORK_HOURS << " : " << std::to_string(calculate_total_entries()) << "\n"; 
+
+    std::cout << "Hours logged based on parameter: " << AVERAGE_HOUR_DAY << " : ";
+    compute_total();
+    std::cout << "\n";
 }

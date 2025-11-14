@@ -11,3 +11,4 @@
 
 int calculate_total_entries();
 void compute_total();
+void print_total_logged_status();
