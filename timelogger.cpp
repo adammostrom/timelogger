@@ -22,6 +22,7 @@ std::vector<Command> commands = {
 int main(int argc, char* argv[]){
 
 
+
     // Show the current time worked on start
     get_current_worked();
     
@@ -129,16 +130,32 @@ bool check_session_started(){
         
     }
     return true;
+}
 
+// Can be used instead of the checking if session started, as well as gain value in returning the actual start state (in seconds).
+int get_started(){
+    std::ifstream start_state_file(Files::StartState.data());
+
+    if(!start_state_file){
+        return 0;
+    }
+
+    long temp = 0;
+
+    start_state_file >> temp;
+    start_state_file.close();
+
+    // Return Epoch seconds logged in .start_state.txt
+    return temp;
 }
 
 void get_current_worked(){
+    
+    long start_state = get_started();
 
-    if(!check_session_started()){
+    if(get_started() == 0){
         return;
     }
-
-    long start_state = read_from_file(Files::StartState.data());
 
     // Read from file
     std::ifstream break_time_file(Files::BreakTotal.data());
@@ -175,26 +192,23 @@ void show_status(const long &start_state, int work_h, int work_m, int break_h, i
 
 void manual_entry(const std::string &filename){
 
-
-    std::tuple<int, int> hhmm = parse_entry();
+    time_t started_time = parse_entry();
 
     // get today's date
     time_t now = time(nullptr);
     tm local_tm = *localtime(&now);
 
-    // overwrite hour/minute/second
+/*     // overwrite hour/minute/second
     local_tm.tm_hour = std::get<0>(hhmm);
     local_tm.tm_min = std::get<1>(hhmm);
     local_tm.tm_sec = 0;
 
     // convert to epoch seconds
-    time_t started_time = mktime(&local_tm);
+    time_t started_time = mktime(&local_tm); */
 
     std::ofstream start_file(filename); 
 
-    std::string message = std::string("The time entered is: ") + 
-    (local_tm.tm_hour < 10 ? "0" : "") + std::to_string(local_tm.tm_hour) + ":" + 
-    (local_tm.tm_min < 10 ? "0" : "") + std::to_string(local_tm.tm_min) + ". \n";
+    std::string message = std::string("The time entered is: ") + epoch_to_hhmm(started_time) + "\n";
 
     if(!confirm(message)){
         std::cout << "Input not saved";
@@ -206,21 +220,13 @@ void manual_entry(const std::string &filename){
 
 void manual_break_entry(){
 
-    std::tuple <int, int> hhmm = parse_entry();
-
-    long hh = std::get<0>(hhmm);
-    long mm = std::get<1>(hhmm);
-
-
-    long secs = calculate_secs_from_hour_min(hh,mm);
+    time_t secs = parse_entry();
 
     long tot = read_from_file(".break_total.txt");
 
     tot += secs;
                                                     
-    std::string message = std::string("The time entered is: ") + 
-    (hh < 10 ? "0" : "") + std::to_string(hh) + ":" + 
-    (mm < 10 ? "0" : "") + std::to_string(mm) + ". \n";
+    std::string message = std::string("The time entered is: ") + epoch_to_hhmm(tot) + "\n";
 
     if(!confirm(message)){
         std::cout << "Break time not saved\n";
@@ -229,6 +235,13 @@ void manual_break_entry(){
     
     save_to_file(".break_total.txt", tot);
 
+}
+
+std::string epoch_to_hhmm(time_t epoch) {
+    std::tm tm = *std::localtime(&epoch);
+    std::ostringstream out;
+    out << std::put_time(&tm, "%H:%M \n");
+    return out.str();
 }
 
 
@@ -268,26 +281,47 @@ std::tuple<int, int> read_epoch_secs_convert_to_hhmm(const std::string &filename
     return std::make_tuple(hour, minute);
 }
 
-std::tuple<int, int> parse_entry(){
-    int hh = 00;
-    int mm = 00;
-    char colon = ':';
+int convert_hhmm_to_epoch(const std::string& hhmm) {
+    // Extract HH and MM from "2330"
+    int hh = std::stoi(hhmm.substr(0, 2));
+    int mm = std::stoi(hhmm.substr(2, 2));
+
+    // Get today's date
+    std::time_t now = std::time(nullptr);
+    std::tm local = *std::localtime(&now);
+
+    // Overwrite only the hour/minute
+    local.tm_hour = hh;
+    local.tm_min  = mm;
+    local.tm_sec  = 0;
+
+    // Convert back to epoch
+    return std::mktime(&local);
+}
+
+time_t parse_entry() {
     std::string hhmm;
-    
-    std::cout << "Input with format: HH:MM \n";
+    std::cout << "Input with format: HHMM\n";
     std::cin >> hhmm;
 
-    std::stringstream ss(hhmm);
-    ss >> hh >> colon >> mm;
-
-    if (hh < 0 || hh > 23) {
-        throw std::runtime_error("Hour must be 0–23");
-    }
-    if (mm < 0 || mm > 59) {
-        throw std::runtime_error("Minute must be 0–59");
+    // structural check: exactly 5 chars, colon in middle, digits around it
+    if (hhmm.size() != 4 || 
+        !isdigit(hhmm[0]) || !isdigit(hhmm[1]) ||
+        !isdigit(hhmm[2]) || !isdigit(hhmm[3])) {
+        throw std::runtime_error("Bad input format (expected HHMM)");
     }
 
-    return std::make_tuple(hh, mm);
+    int hh = std::stoi(hhmm.substr(0, 1));
+    int mm = std::stoi(hhmm.substr(2, 2));
+
+    if (hh > 23) throw std::runtime_error("Hour must be 0–23");
+    if (mm > 59) throw std::runtime_error("Minute must be 0–59");
+
+    time_t epoch = convert_hhmm_to_epoch(hhmm);
+
+    std::cout << std::to_string(epoch);
+
+    return epoch;
 }
 
 // Read the epoch time (seconds) from a file.

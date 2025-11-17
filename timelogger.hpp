@@ -72,7 +72,7 @@ void clear_file(const std::string& filename);
 bool is_manual_format_ok(int hh, int mm);
 
 
-std::tuple<int, int> parse_entry();
+time_t parse_entry();
 void manual_end_entry();
 
 
@@ -83,15 +83,11 @@ void save_to_file(const std::string &filename, int tot);
 
 std::tuple<int, int> read_epoch_secs_convert_to_hhmm(const std::string &filename);
 
-// WIP
 
-std::tuple<time_t, time_t> get_started_time();
-// GUI
-
-int test_gui(int argc, char **argv);
 
 void manual_entry(const std::string &filename);
 
+std::string epoch_to_hhmm(time_t epoch);
 
 
 #endif
