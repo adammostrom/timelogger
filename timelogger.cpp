@@ -12,6 +12,7 @@ std::vector<Command> commands = {
     {"Manual end entry",   "me", manual_end_entry},
     {"Clear temporary files", "cl", clear_temp_files},
     {"Logged data overview", "o", logged_data_overview},
+    {"Create logging file", "nf", create_logging_file},
     //{"Create new datafile", "nd", create_data_file},
     {"Cancel", "c", [](){ std::cout << "Cancelled.\n"; }}
 };
@@ -153,41 +154,50 @@ void get_current_worked(){
     
     long start_state = get_started();
 
-    if(get_started() == 0){
+    if(start_state == 0){
         return;
     }
 
-    // Read from file
+    // Todo, separation of concern, use read function here.
     std::ifstream break_time_file(Files::BreakTotal.data());
-
     long break_total = 0;
-
-    if( break_time_file >> break_total){
-        
-    };
+    break_time_file >> break_total;
 
     long break_hours = calculate_hour_from_seconds(break_total);
     long break_minutes = calculate_mins_from_seconds(break_total);
 
 
     time_t now = get_current_time();
-
-    // Unix gets the total seconds, the difference will be in seconds. 
     long seconds = static_cast<int>(difftime(now,start_state)) - break_total;
+    
+    if (seconds < 0) seconds = 0;
+
     long hours = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
 
     show_status(start_state, hours, minutes, break_hours, break_minutes);
 }
 
-void show_status(const long &start_state, int work_h, int work_m, int break_h, int break_m){
-    std::cout << "\033[1;36m"  // bold cyan
+void show_status(const long &start_state, int work_h, int work_m,
+                 int break_h, int break_m) 
+{
+    std::tm* tm_start = localtime(&start_state);
+
+    std::cout << "\033[1;36m"
               << "┌──────────────────────────────────────────┐\n"
-              << "│ Started: " << std::put_time(localtime(&start_state), "%H:%M \n") << std::string(35 - 10, ' ') << "│\n"
+              << "│ Started: " << std::put_time(tm_start, "%H:%M")
+              << "                                │\n"
               << "│ Worked: " << work_h << "h " << work_m << "m"
-              << std::string(29 - (std::to_string(work_h).size() + std::to_string(work_m).size()), ' ') << "│\n"
-              << "│ Breaks: " << (break_h < 10 ? "0" : "") << break_h << ":" << (break_m < 10 ? "0" : "") <<  break_m << "\n"
-              << "└──────────────────────────────────────────┘\033[0m\n";  // reset color
+              << std::string(30 - (std::to_string(work_h).size() +
+                                   std::to_string(work_m).size()), ' ')
+              << "│\n"
+              << "│ Breaks: "
+              << std::setw(2) << std::setfill('0') << break_h << ":"
+              << std::setw(2) << std::setfill('0') << break_m
+              << "                              │\n"
+              << "└──────────────────────────────────────────┘\033[0m\n";
+
+    std::cout << std::setfill(' ');  // reset fill
 }
 
 void manual_entry(const std::string &filename){
@@ -630,12 +640,12 @@ std::vector<std::string> read_from_directory(const std::string& path) {
 
 bool check_name(const std::string &name){
     int max = 30;
-    int min = 5;
+    int min = 4;
     if(name.size() >= 30){
         std::cout << "Too many characters. Maximum input: " + std::to_string(max) + "\n Your input: " + std::to_string(name.size()) << std::endl;
         return false;
     }
-    if(name.size() < 6){ 
+    if(name.size() < 5){ 
         std::cout << "Too few characters. Minimum input: " +  std::to_string(min) + "\n Your input: " + std::to_string(name.size()) << std::endl;        
         return false; 
     }
@@ -643,7 +653,7 @@ bool check_name(const std::string &name){
 }
 
 int create_logging_file(){
-    std::cout << "Please give a name for the logging file, minimum 5 characters, max 30 characters: " << std::endl; 
+    std::cout << "Please give a name for the logging file, minimum 4 characters, max 30 characters: " << std::endl; 
     std::string name;
     std::cin >> name;
     while(!check_name(name)){
@@ -673,30 +683,49 @@ int create_logging_file(){
 
 
 std::string file_to_log_data(){
-    
-    if(read_from_directory(DATA_DIRECTORY).empty()){
-        std::cout << "No logging files found. Proceed to create one?\n";
-        std::string choice;
-        std::cin >> choice;
-        if(confirm(choice)){
-            create_logging_file();
-        }
+
+    while(true){
+        auto datafiles = read_from_directory(DATA_DIRECTORY); 
+        if(datafiles.empty()){
+            std::cout << "No logging files found. Proceed to create one?\n";
+            std::string choice;
+            std::cin >> choice;
+            if(confirm(choice)){
+                create_logging_file();
+                continue; // Continue the loop
+            }
+            else {
+                //TODO, What to return if user for some reason dont want to create a datafile? Just cancel?
+                continue;
+            }
     }
-
-    std::vector<std::string> datafiles = read_from_directory(DATA_DIRECTORY);
-
+    
     std::cout << "Files in datadirectory for logging: \n";
-    for(int i = 0; i < datafiles.size();  i++){
+    std::cout << "Select which logfile to store the data. \n";
+    for(int i = 1; i < datafiles.size();  i++){
         std::cout << std::to_string(i) << ". " << datafiles[i] << std::endl;
     } 
+    std::cout << "0. Create a new file\n";
 
-    std::cout << "Select which logfile to store the data. \n";
     int input;
     std::cin >> input;
+    
+    if(input == 0){
+        create_logging_file();
+        continue;
+    }
+
+    if(input < 1 || input > datafiles.size()){
+        std::cout << "Invalid option. Try again.\n";
+        continue;
+    }
 
     // use filesystem::path
-    std::filesystem::path fullpath = std::filesystem::path(DATA_DIRECTORY) / datafiles[input];
+    std::filesystem::path fullpath = std::filesystem::path(DATA_DIRECTORY) / datafiles[input - 1];
     return fullpath.string();  
 //
+    }
+    
+    
 }
 

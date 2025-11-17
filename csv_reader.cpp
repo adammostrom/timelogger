@@ -39,6 +39,7 @@ void compute_total(){
 
     int total_entries = calculate_total_entries();
 
+    // Hardcoded file. Add option to select which file to check.
     std::filesystem::path p = Files::LoggedTotal.data();
     std::ifstream file(p.string());
     if(!file.is_open()){

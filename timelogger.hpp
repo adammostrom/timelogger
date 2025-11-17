@@ -31,6 +31,7 @@ struct Command {
     std::function<void()> action;
 };
 
+int create_logging_file();
 
 //// WORK IN PROGRESS ////
 
