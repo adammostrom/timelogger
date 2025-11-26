@@ -74,7 +74,7 @@ void print_menu(const std::vector<Command>& commands){
 void handle_input(const std::vector<Command>& commands){
 
 
-    std::cout << "> Enter command: _ ";
+    std::cout << "> Enter command: ";
     
     std::string input;
     std::cin >> input;
@@ -113,7 +113,9 @@ void handle_input(const std::vector<Command>& commands){
 
 
 
-bool check_session_started(){
+/* bool check_session_started(){
+
+
     std::ifstream start_state_file(Files::StartState.data());
 
     if(!start_state_file){
@@ -131,10 +133,12 @@ bool check_session_started(){
         
     }
     return true;
-}
+} */
 
 // Can be used instead of the checking if session started, as well as gain value in returning the actual start state (in seconds).
 int get_started(){
+
+    // Todo: Make it accept any file (for expanding the program to have several active loggers)
     std::ifstream start_state_file(Files::StartState.data());
 
     if(!start_state_file){
@@ -158,10 +162,7 @@ void get_current_worked(){
         return;
     }
 
-    // Todo, separation of concern, use read function here.
-    std::ifstream break_time_file(Files::BreakTotal.data());
-    long break_total = 0;
-    break_time_file >> break_total;
+    long break_total = read_from_file(Files::BreakTotal.data());
 
     long break_hours = calculate_hour_from_seconds(break_total);
     long break_minutes = calculate_mins_from_seconds(break_total);
@@ -175,6 +176,7 @@ void get_current_worked(){
     long hours = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
 
+    // Todo: Make into data struct?
     show_status(start_state, hours, minutes, break_hours, break_minutes);
 }
 
@@ -216,6 +218,7 @@ void manual_entry(const std::string &filename){
     // convert to epoch seconds
     time_t started_time = mktime(&local_tm); */
 
+    
     std::ofstream start_file(filename); 
 
     std::string message = std::string("The time entered is: ") + epoch_to_hhmm(started_time) + "\n";
@@ -257,7 +260,7 @@ std::string epoch_to_hhmm(time_t epoch) {
 
 void manual_session_entry(){
 
-    if(check_session_started()){
+    if(get_started() > 0){
         std::cout << "Warning. Session already logged as started. Proceeding will overwrite.\n";
     }
 
@@ -266,7 +269,7 @@ void manual_session_entry(){
 }
 
 void manual_end_entry(){
-    if(!check_session_started()){
+    if(get_started() < 1){
         throw std::runtime_error("Session not started. Cannot end non-started session.\n");
     }
 
@@ -483,7 +486,7 @@ int break_stop(){
 
 void start_calculator(){
 
-    if(check_session_started()){
+    if(get_started() > 0){
         std::cerr << "\rSession already started! \n";
         return;
     }
@@ -497,7 +500,7 @@ void start_calculator(){
 }
 
 void end_calculator(){
-    if(!check_session_started()){
+    if(get_started() < 1){
         throw std::runtime_error("Session not started, cannot end time \n"); 
         return;
     }
@@ -703,7 +706,7 @@ std::string file_to_log_data(){
     std::cout << "Files in datadirectory for logging: \n";
     std::cout << "Select which logfile to store the data. \n";
     for(int i = 1; i < datafiles.size();  i++){
-        std::cout << std::to_string(i) << ". " << datafiles[i] << std::endl;
+        std::cout << std::to_string(i) << ". " << datafiles[i - 1] << std::endl;
     } 
     std::cout << "0. Create a new file\n";
 
