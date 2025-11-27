@@ -509,6 +509,8 @@ void end_calculator(){
     time_t end_state = system_clock::to_time_t(now); */
     time_t now_c = get_current_time();
 
+    std::cout << "TEST";
+
     save_to_file(".end_state.txt", now_c);
 
     save_to_log();
@@ -545,7 +547,7 @@ void save_to_log(){
 
 
     // Append the total 
-    save_to_file(Files::LoggedTotal.data(), total_work_time);
+    save_to_file(datafile, total_work_time);
 
     std::string logging_record = format_record(
         start_state, 
