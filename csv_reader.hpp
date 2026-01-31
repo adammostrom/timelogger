@@ -6,8 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include "files.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 int calculate_total_entries();
 void compute_total();

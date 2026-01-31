@@ -1,4 +1,10 @@
 #include "timelogger.hpp"
+#include "files.hpp"
+
+
+
+
+
 
 
 std::atomic<bool> quit(false);
@@ -10,104 +16,106 @@ std::vector<Command> commands = {
     {"Manual start entry", "md", manual_session_entry},
     {"Manual break entry", "mb", manual_break_entry},
     {"Manual end entry",   "me", manual_end_entry},
-    {"Clear temporary files", "cl", clear_temp_files},
-    {"Logged data overview", "o", logged_data_overview},
+    {"Clear temporary files", "cl", clear_temp_files_wrapper},
+    //{"Logged data overview", "o", logged_data_overview},
     {"Create logging file", "nf", create_logging_file},
     //{"Create new datafile", "nd", create_data_file},
-    {"Cancel", "c", [](){ std::cout << "Cancelled.\n"; }}
+    {"Cancel", "c", ([](){quit=true;})}
 };
 
 
 
-
-int main(int argc, char* argv[]){
-
+int main(){
 
 
-    // Show the current time worked on start
-    get_current_worked();
+    while(!quit){
+        // Show the current time worked on start
+        get_current_worked();
+        
     
-    if(argc >= 2){
-        std::string cmd = argv[1];
-        if (cmd == "start") start_calculator();
-        else if (cmd == "end") end_calculator();
-        else if (cmd == "break") break_start();
-        else print_menu(commands);
-        return 0;
+        // Just prints the commands
+        print_main_menu(commands);
+    
+        // Waits for a command to call
+        Command operation = handle_input(commands);
+    
+        // Perform the operation
+        operation.action();
+            
     }
-    
-    print_menu(commands);
-    handle_input(commands);
-
     return 0;
-
+    
 }
 
 
-void logged_data_overview(){
+
+/* void logged_data_overview(){
     print_total_logged_status();
 }
-
+ */
 
 /* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
-void confirm_directory(const std::string directory){
-    if(!std::filesystem::exists(directory)){
+// Pure logic: returns true if directory exists or was successfully created
+bool ensure_directory_exists(const std::string& directory) {
+    if(std::filesystem::exists(directory)) return true;
+
+    try {
+        return std::filesystem::create_directory(directory);
+    } catch (const std::filesystem::filesystem_error&) {
+        return false;
+    }
+}
+
+// CLI wrapper: handles printing
+void confirm_directory_cli(const std::string& directory) {
+    if(!std::filesystem::exists(directory)) {
         std::cout << "No directory found. Creating new directory ... \n";
-        if (std::filesystem::create_directory(directory)) {
+        if(ensure_directory_exists(directory)) {
             std::cout << "Directory created: " << directory << "\n";
+        } else {
+            std::cout << "Failed to create directory: " << directory << "\n";
         }
     }
 }
 
 
-
-void print_menu(const std::vector<Command>& commands){
+void print_main_menu(const std::vector<Command>& commands){
 
     std::cout << "Following commands available: \n";
     
-    for(int i = 0; i < commands.size(); i++){
+    for(int i = 0; i < commands.size() - 1; i++){
         std::cout << "\t" << "[" << std::to_string(i) << "]" << "." + commands[i].name << " (" << commands[i].command << ")" << std::endl; 
-    }
-    
+    }    
 }
+// For state patch -> make this return a command to be called on in "OpState", and have the handler return the OpState
 
-void handle_input(const std::vector<Command>& commands){
+Command handle_input(const std::vector<Command>& commands){
 
-
-    std::cout << "> Enter command: ";
-    
-    std::string input;
-    std::cin >> input;
-    
-    
-    bool is_number = !input.empty() && std::all_of(input.begin(), input.end(), ::isdigit);
-    
-    
-    while(input != "q"){
-
-    bool found = false;
+    while(true){
+        std::cout << "> Enter command (q to quit): ";
+        std::string input;
+        std::cin >> input;
+       
+        if(input == "q"){
+            return commands[commands.size() - 1]; // Hardcoded for now
+        }
+        
+        bool is_number = !input.empty() && 
+        std::all_of(input.begin(), input.end(), [](char c) {return std::isdigit(static_cast<unsigned char>(c)); });
         
         if(is_number){
             int index = std::stoi(input);
     
             if(index >= 0 && index <= commands.size()){
-                commands[index].action();
-                return;    
+                return commands[index];    
             }
-        }
-        else {
-            for (Command c : commands){
-                if( input == c.command){
-                    c.action();
-                    found = true;
-                    return;
+        } else {
+            for (const Command& c : commands){
+                if( input == c.command){ return c;
                 }
             }
         }
-        if(!found){
-            std::cout << "Unknown command. \n";
-            return;
-        }
+    std::cout << "Unknown command. \n";
     }
 }
 
@@ -393,7 +401,7 @@ void input_thread(){
 }
 
 
-int break_start(){
+void break_start(){
 
     time_t now_c = get_current_time();
 
@@ -422,7 +430,7 @@ int break_start(){
     t.join();
 
     break_stop();
-    return 0;
+    //return 0;
 }
 
 int break_stop(){
@@ -508,9 +516,6 @@ void end_calculator(){
     /* auto now = system_clock::now();
     time_t end_state = system_clock::to_time_t(now); */
     time_t now_c = get_current_time();
-
-    std::cout << "TEST";
-
     save_to_file(".end_state.txt", now_c);
 
     save_to_log();
@@ -519,7 +524,7 @@ void end_calculator(){
 
 void save_to_log(){
 
-    confirm_directory(DATA_DIRECTORY);
+    confirm_directory_cli(DATA_DIRECTORY);
 
     long break_total = read_from_file(".break_total.txt");
 
@@ -575,7 +580,7 @@ void save_to_log(){
     
     log_file.close();
     
-    clear_temp_files();
+    clear_temp_files_wrapper();
 
     return;
 }
@@ -596,29 +601,50 @@ std::string format_record(time_t start_state, time_t end_state, long  break_tota
     return oss.str();
 }
 
-void clear_file(const std::string& filename) {
-    std::ofstream file(filename, std::ios::trunc); // open in truncate mode
+
+// State test:
+
+// Todo: Have option on which files to clear
+
+void clear_temp_files_wrapper(){
+    
+    std::string message = "Clear temporary files? Current data will be erased! \n";
+    
+    if(confirm(message)){
+        clear_temp_files_operation();
+        std::cout << "Temporary files cleared! \n";
+    }
+    else {
+        std::cout << "Temporary files not cleared! \n";
+    }    
 }
 
-void clear_temp_files(){
 
-    std::string message = "Clear temporary files? Current data will be erased! \n";
+bool clear_temp_files_operation(){
+    bool ok = true;
+    // Returns true only if all calls return true.
+    ok &= clear_file(".break_start.txt");
+    ok &= clear_file(".break_total.txt");
+    ok &= clear_file(".start_state.txt");
+    ok &= clear_file(".end_state.txt");
+    
+    return ok;
+}
 
-    if(confirm(message)){
-        clear_file(".break_start.txt");
-        clear_file(".break_total.txt");
-        clear_file(".start_state.txt");
-        clear_file(".end_state.txt");
+bool clear_file(const std::string& filename) {
+    std::ofstream file(filename, std::ios::trunc); // open in truncate mode
 
-        std::cout << "Temporary files cleared! \n";
-
-        return;
+    std::ifstream check(filename);
+    check.seekg(0, std::ios::end);
+    if (check.tellg() != 0) {
+        return false;
     }
-    std::cout << "Temporary files not cleared! \n";
+    return file.good();
 }
 
 bool confirm(const std::string& message) {
-    std::cout << message << "(yes/ENTER to accept, no to cancel): \n";
+
+    std::cout << message << "(y/n), 'b' to go back to main menu: \n";
 
     std::string input;
     //std::cin.ignore(numeric_limits<streamsize>::max(), '\n');  
@@ -630,6 +656,9 @@ bool confirm(const std::string& message) {
 
     if (input == "yes" || input == "y") {
         return true; // accepted
+    }
+    if(input == "b"){
+        return false;
     }
     return false; // anything else = reject
 }
@@ -643,25 +672,35 @@ std::vector<std::string> read_from_directory(const std::string& path) {
     return files;
 }
 
-bool check_name(const std::string &name){
-    int max = 30;
+// Pure logic: returns true if name is valid
+bool is_name_valid(const std::string& name) {
+    return name.size() >= 4 && name.size() <= 30;
+}
+
+// CLI wrapper: prints messages
+bool check_name_cli(const std::string& name) {
     int min = 4;
-    if(name.size() >= 30){
-        std::cout << "Too many characters. Maximum input: " + std::to_string(max) + "\n Your input: " + std::to_string(name.size()) << std::endl;
+    int max = 30;
+
+    if (!is_name_valid(name)) {
+        if (name.size() < min)
+            std::cout << "Too few characters. Minimum input: " << min 
+                      << "\nYour input: " << name.size() << "\n";
+        else
+            std::cout << "Too many characters. Maximum input: " << max 
+                      << "\nYour input: " << name.size() << "\n";
+
         return false;
     }
-    if(name.size() < 5){ 
-        std::cout << "Too few characters. Minimum input: " +  std::to_string(min) + "\n Your input: " + std::to_string(name.size()) << std::endl;        
-        return false; 
-    }
+
     return true;
 }
 
-int create_logging_file(){
+void create_logging_file(){
     std::cout << "Please give a name for the logging file, minimum 4 characters, max 30 characters: " << std::endl; 
     std::string name;
     std::cin >> name;
-    while(!check_name(name)){
+    while(!check_name_cli(name)){
         std::cout << "Try again: " << std::endl;
         std::cin >> name;
     }
@@ -669,68 +708,69 @@ int create_logging_file(){
     std::filesystem::path destination = std::filesystem::path(DATA_DIRECTORY) / (name + ".csv");
 
 
-    confirm_directory(DATA_DIRECTORY);
+    confirm_directory_cli(DATA_DIRECTORY);
 
     // Create the file at destination
     std::ofstream file(destination);
     if (!file) {
         std::cerr << "Failed to create file: " << destination << "\n";
-        return 1;
+        //return 1;
     }
 
     file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min \n"; 
     file.close();
 
     std::cout << "Created file: " << destination << "\n";
-
-    return 0;
+    // return 0
 }
 
+
+
+
+// TODO: DEC 2 -> SPLIT THIS FUNCTION
+
+
+void print_log_files(const std::vector<std::string>& datafiles){
+    std::cout << "Log files available: \n";
+    for(int i = 1; i < datafiles.size() + 1;  i++){
+            std::cout << std::to_string(i) << ". " << datafiles[i - 1] << std::endl;
+        } 
+    std::cout << "0. " << "Create new datafile \n";
+        
+}
+
+int read_int(){
+    int v;
+    if (!(std::cin >> v)) {
+        std::cin.clear(); // clear fail state
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // toss bad input
+        std::cout << "Invalid option. Try again.\n";
+    }
+    return v;
+}
 
 std::string file_to_log_data(){
 
     while(true){
         auto datafiles = read_from_directory(DATA_DIRECTORY); 
-        if(datafiles.empty()){
-            std::cout << "No logging files found. Proceed to create one?\n";
-            std::string choice;
-            std::cin >> choice;
-            if(confirm(choice)){
-                create_logging_file();
-                continue; // Continue the loop
-            }
-            else {
-                //TODO, What to return if user for some reason dont want to create a datafile? Just cancel?
-                continue;
-            }
-    }
-    
-    std::cout << "Files in datadirectory for logging: \n";
-    std::cout << "Select which logfile to store the data. \n";
-    for(int i = 1; i < datafiles.size();  i++){
-        std::cout << std::to_string(i) << ". " << datafiles[i - 1] << std::endl;
-    } 
-    std::cout << "0. Create a new file\n";
 
-    int input;
-    std::cin >> input;
-    
-    if(input == 0){
-        create_logging_file();
-        continue;
-    }
+        print_log_files(datafiles);
 
-    if(input < 1 || input > datafiles.size()){
-        std::cout << "Invalid option. Try again.\n";
-        continue;
-    }
+        int input = read_int();
 
-    // use filesystem::path
-    std::filesystem::path fullpath = std::filesystem::path(DATA_DIRECTORY) / datafiles[input - 1];
-    return fullpath.string();  
-//
+        if(input == 0){
+            create_logging_file();
+            continue;
+        }
+
+        if(input < 1 || input > datafiles.size()){
+            std::cout << "Invalid option. Try again.\n";
+            continue;
+        }
+
+        // use filesystem::path
+        std::filesystem::path fullpath = std::filesystem::path(DATA_DIRECTORY) / datafiles[input - 1];
+        return fullpath.string();  
     }
-    
-    
 }
 

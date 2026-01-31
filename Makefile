@@ -3,6 +3,9 @@
 # @ = Hides the command from the output
 # - = Wont print if there are any errors
 
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
+
 clean:
 	-@rm -f .break_start.txt .break_total.txt .start_state.txt
 	@touch .break_start.txt .break_total.txt .start_state.txt
@@ -18,7 +21,7 @@ commands:
 run:
 #	git checkout log;
 #	git pull;
-	@g++ timelogger.cpp utils.cpp csv_reader.cpp -o timelogger ;
+	$(CXX) $(CXXFLAGS) timelogger.cpp utils.cpp csv_reader.cpp -o timelogger ;
 	@./timelogger
 
 gui:

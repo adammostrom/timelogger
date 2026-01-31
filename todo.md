@@ -43,6 +43,7 @@
 ## CONTROL AND SAFETY
 
 ## IMPROVEMENTS AND REFACTOR
+[ ] Add [INFO] box for all printouts. Keep I/O centralized
 
 ## DATAFILES INTERACTION
 [X] Add check for datafiles, and if there are none, ask user to create one.

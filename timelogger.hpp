@@ -18,34 +18,37 @@
 #include <string_view>
 
 #include "csv_reader.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 /*
 Datastructures:
 */ 
-
 // Command structure for adding and editing commands in the start menu.
 struct Command {
     std::string name;
     std::string command;
-    std::function<void()> action;
+    void (*action)();
 };
 
-int create_logging_file();
+///////////////////////////////////////////////////
+
+
+void create_logging_file();
 
 //// WORK IN PROGRESS ////
 
 void logged_data_overview();    
 
-int break_start();
+void break_start();
 int break_stop();
 void get_current_worked();
 time_t get_current_time();
 void start_calculator();
 void end_calculator();
 void manual_session_entry();
-void print_menu(const std::vector<Command>& commands);
-void handle_input(const std::vector<Command>& commands);
+void print_main_menu(const std::vector<Command>& commands);
+Command handle_input(const std::vector<Command>& commands);
+int cancel_command();
 //void current_log_file();
 
 
@@ -57,7 +60,13 @@ std::string format_record(time_t start_state, time_t end_state, long  break_tota
                      long break_total_mins, long worked_hours,
                      long worked_mins, long total_work_time_hours, long total_work_time_mins);
 bool confirm_logging(const std::string& record);
-void clear_temp_files();
+
+
+
+void clear_temp_files_wrapper();
+bool clear_temp_files_operation();
+
+
 bool check_session_started();
 bool confirm(const std::string& message);
 
@@ -68,7 +77,6 @@ int switch_command(const int &command);
 
 
 void manual_break_entry();
-void clear_file(const std::string& filename);
 
 bool is_manual_format_ok(int hh, int mm);
 
@@ -80,6 +88,7 @@ void manual_end_entry();
 long read_from_file(const std::string &filename);
 void save_to_log();
 
+bool clear_file(const std::string& filename);
 void save_to_file(const std::string &filename, int tot);
 
 std::tuple<int, int> read_epoch_secs_convert_to_hhmm(const std::string &filename);

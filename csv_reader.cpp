@@ -1,10 +1,11 @@
 #include "csv_reader.hpp"
+#include "files.hpp"
 
 const int AVERAGE_HOUR_DAY = 8;
 
-/// Read total time from the datafile
-int calculate_total_entries(){
-    std::filesystem::path p = WORK_HOURS;
+/// Read the total amount of entries logged in a csv log file.
+int calculate_total_entries(const std::filesystem::path logfile){
+    std::filesystem::path p = DATA_DIRECTORY / logfile;
     std::ifstream fin(p.string());
     if(!fin.is_open()){
         std::cerr << "Failed to open file: " << p << '\n';
@@ -37,7 +38,7 @@ int calculate_total_entries(){
 
 void compute_total(){
 
-    int total_entries = calculate_total_entries();
+    int total_entries = calculate_total_entries("TEST_logged_times.csv");
 
     // Hardcoded file. Add option to select which file to check.
     std::filesystem::path p = Files::LoggedTotal.data();
@@ -71,10 +72,10 @@ void compute_total(){
 
 }
 
-void print_total_logged_status(){
+/* void print_total_logged_status(){
     std::cout << "Total entries in " << WORK_HOURS << " : " << std::to_string(calculate_total_entries()) << "\n"; 
 
     std::cout << "Hours logged based on parameter: " << AVERAGE_HOUR_DAY << " : ";
     compute_total();
     std::cout << "\n";
-}
+} */
