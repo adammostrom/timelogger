@@ -1,29 +1,31 @@
-.PHONY: clean, build, gui, log, commands, run, test, study
+.PHONY: all clean run
 
 # @ = Hides the command from the output
 # - = Wont print if there are any errors
 
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
+CXX      := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Iinclude
+
+SRC      := main.cpp \
+			src/cli.cpp \
+			src/logger.cpp \
+			src/timer.cpp \
+			src/utils.cpp 
+
+OBJ := $(SRC:.cpp=.o) # Converts .cpp → .o
+
+TARGET := timerlogger  # Name of final executable
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CXX) $(OBJ) -o $(TARGET)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
-	-@rm -f .break_start.txt .break_total.txt .start_state.txt
-	@touch .break_start.txt .break_total.txt .start_state.txt
-	@echo "Temporary datafiles cleaned."
-
-build:
-	@git checkout log;
-	@g++ timelogger.cpp utils.cpp -o timelogger 
-	
-commands:
-	@cat Makefile
-
-run:
-#	git checkout log;
-#	git pull;
-	$(CXX) $(CXXFLAGS) timelogger.cpp utils.cpp csv_reader.cpp -o timelogger ;
-	@./timelogger
-
-gui:
-	@g++ gui.cpp -o gui -lfltk
-	@./gui
+	rm -f $(OBJ) $(TARGET)
