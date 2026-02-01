@@ -83,23 +83,47 @@ int get_started(){
     return temp;
 }
 
-void show_status(const long &start_state, int work_h, int work_m,
-                 int break_h, int break_m) 
-{
-    std::tm* tm_start = localtime(&start_state);
+// TODO 2026-02-02
+void show_status() {
 
+    if(get_started() == 0){
+        return;
+    }
+
+    StatusParams statusParams = get_current_worked();
+
+    long end_state = read_from_file(".end_state.txt");
+    
+    std::string end_s;
+    
+    if(end_state == 0){
+        end_s = "-----";
+    }else {
+        end_s = epoch_to_hhmm(end_state);
+    }
+
+    long start_epoch = read_from_file(".start_state.txt");
+    long end_epoch = read_from_file(".end_state.txt");
+
+    std::string end_start_diff;
+
+    if(start_epoch == 0 || end_epoch == 0){
+        end_start_diff = "-----";
+    }else {
+        end_start_diff = epoch_to_hhmm(end_epoch-start_epoch);
+    }
+    std::tm* tm_start = localtime(&statusParams.start_state);
+    
+    
     std::cout << "\033[1;36m"
               << "┌──────────────────────────────────────────┐\n"
-              << " * Started : " << std::put_time(tm_start, "%H:%M")
-              << "                           \n"
-              << " * Session : " << work_h << "h " << work_m << "m"
-              << std::string(30 - (std::to_string(work_h).size() +
-                                   std::to_string(work_m).size()), ' ')
-              << "\n"
-              << " * Breaks  : "
-              << std::setw(2) << std::setfill('0') << break_h << ":"
-              << std::setw(2) << std::setfill('0') << break_m
-              << "\n"
+              << " * Started              : " << std::put_time(tm_start, "%H:%M") << "\n"
+              << " * Session since Start  : " << statusParams.hours<< "h " << statusParams.minutes << "m" << "\n"
+              << " * Breaks               : "
+              << std::setw(2) << std::setfill('0') << statusParams.break_hours << ":"
+              << std::setw(2) << std::setfill('0') << statusParams.break_minutes << "\n"
+              << " * Logged End           : " << std::setw(5) << std::left << end_s << "\n"
+              << " * End - Start diff     : " <<  end_start_diff <<"\n"
               << "└──────────────────────────────────────────┘\033[0m\n";
 
     std::cout << std::setfill(' ');  // reset fill
@@ -107,38 +131,44 @@ void show_status(const long &start_state, int work_h, int work_m,
 
 
 
-void manual_entry(const std::string &filename){
-
+void manual_entry(const std::string &filename) {
+    // Prompt user for HHMM input
     auto result = prompt_hhmm();
     if (!result.has_value()) {
-        std::cout << "Invalid input.\n";
+        std::cout << "Input cancelled.\n";
         return;
     }
-    time_t started_time = result.value();
+    time_t entered_time = result.value();
 
-    // get today's date
-    time_t now = time(nullptr);
-    tm local_tm = *localtime(&now);
+    // Read the current opposite time for validation
+    long other_time = 0;
+    if (filename == ".start_state.txt") {
+        other_time = read_from_file(".end_state.txt");
+        if (other_time > 0 && entered_time > other_time) {
+            std::cout << "Start session cannot be after current end time!\n";
+            return;
+        }
+    } else if (filename == ".end_state.txt") {
+        other_time = read_from_file(".start_state.txt");
+        if (other_time > 0 && entered_time < other_time) {
+            std::cout << "End session time cannot predate start session time!\n";
+            return;
+        }
+    }
 
-/*     // overwrite hour/minute/second
-    local_tm.tm_hour = std::get<0>(hhmm);
-    local_tm.tm_min = std::get<1>(hhmm);
-    local_tm.tm_sec = 0;
-
-    // convert to epoch seconds
-    time_t started_time = mktime(&local_tm); */
-
-    
-    std::ofstream start_file(filename); 
-
-    std::string message = std::string("The time entered is: ") + epoch_to_hhmm(started_time) + ". Save time registered? ";
-
-    if(!confirm(message)){
-        std::cout << "Input not saved";
+    // Confirm with user before saving
+    std::string message = "The time entered is: " + epoch_to_hhmm(entered_time) + ". Save time? ";
+    if (!confirm(message)) {
+        std::cout << "Input not saved.\n";
         return;
     }
 
-    save_to_file(filename, started_time);
+    // Save to file
+    if (save_to_file(filename, entered_time)) {
+        std::cout << "Time saved: " << epoch_to_hhmm(entered_time) << "\n";
+    } else {
+        std::cout << "Failed to save time.\n";
+    }
 }
 
 void manual_break_entry(){
@@ -148,12 +178,13 @@ void manual_break_entry(){
         std::cout << "Invalid input.\n";
         return;
     }
+
     time_t secs = result.value();
 
     time_t tot = read_from_file(".break_total.txt");
 
     tot += secs;
-                                                    
+    
     std::string message = std::string("The time entered is: ") + epoch_to_hhmm(tot) + ". Save time registered? ";
 
     if(!confirm(message)){
@@ -183,7 +214,6 @@ void manual_end_entry(){
     }
 
     manual_entry(".end_state.txt");
-    save_to_log();
 }
 
 void input_thread(){
@@ -198,6 +228,7 @@ void input_thread(){
 }
 
 
+// TODO
 void break_start(){
 
     time_t now_c = get_current_time();
@@ -227,9 +258,10 @@ void break_start(){
     t.join();
 
     break_stop();
-    //return 0;
 }
 
+
+// TODO
 int break_stop(){
 /*     ifstream break_start_file(".break_start.txt");
 
@@ -288,7 +320,7 @@ int break_stop(){
 
 }
 
-
+// expand to be select of which files to clear
 void clear_temp_files_wrapper(){
     
     std::string message = "Clear temporary files? Current data will be erased! \n";

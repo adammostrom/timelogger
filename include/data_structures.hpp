@@ -19,4 +19,13 @@ struct LogEntry {
     long worked_m;
     long worked_tot_h;
     long worked_tot_m;
+    std::string note;
+};
+
+struct StatusParams {
+    long start_state;
+    long hours;
+    long minutes;
+    long break_hours;
+    long break_minutes;
 };

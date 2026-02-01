@@ -16,7 +16,8 @@ void end_calculator();
 void break_start();
 int break_stop();
 
-void get_current_worked();
+StatusParams get_current_worked();
+
 time_t get_current_time();
 
 std::tuple<int, int> read_epoch_secs_convert_to_hhmm(const std::string &filename);

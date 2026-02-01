@@ -28,14 +28,19 @@ void save_to_log(){
         return;
     }
 
-/* 
-    ///////////////// UNDER CONSTRUCTION ////////////////////
-    string note = "";
-    std::std::cout << "(Optional): Add note. (c) to ignore. \n";
-    getline(std::std::cin, note);
-    ///////////////////////////////////////////////////
 
-     */
+    ///////////////// UNDER CONSTRUCTION ////////////////////
+
+    std::string note;
+    std::cout << "(Optional): Add note. (c to ignore)\n";
+
+    std::getline(std::cin >> std::ws, note);
+    //           ^^^^^^^^^^^^^^^^^
+    // eats leading whitespace safely
+    if (note == "c") {
+        note.clear();
+    }
+        
     std::string datafile = file_to_log_data();
     std::cout << datafile + " selected \n";
     std::ofstream log_file(datafile, std::ios::app); // append mode
@@ -51,8 +56,12 @@ void save_to_log(){
     logEntry.worked_m = calculate_mins_from_seconds(elapsed);
     logEntry.worked_tot_h = calculate_hour_from_seconds(total_work_time);
     logEntry.worked_tot_m = calculate_mins_from_seconds(total_work_time);
+    logEntry.note = note;
 
-    std::string logging_record = format_record(logEntry);
+    std::tm start_tm = *std::localtime(&logEntry.start);
+    std::tm end_tm = *std::localtime(&logEntry.end);
+
+    std::string logging_record = format_record(logEntry, start_tm, end_tm);
 
 
 

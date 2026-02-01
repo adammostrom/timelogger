@@ -53,7 +53,7 @@ int get_started();
 
 bool check_session_started();
 
-void show_status(const long &start_state, int work_h, int work_m, int break_h, int break_m);
+void show_status();
 
 int switch_command(const int &command);
 

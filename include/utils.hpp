@@ -11,7 +11,7 @@
 #include <thread>
 #include <optional>
 
-std::string format_record(const LogEntry& logEntry);
+std::string format_record(const LogEntry& entry, const std::tm& start_tm, const std::tm& end_tm);
 
 long calculate_hour_from_seconds(long seconds);
 long calculate_mins_from_seconds(long seconds);
@@ -28,4 +28,6 @@ bool ensure_directory_exists(const std::string& directory);
 
 int read_int();
 
-bool parse_hhmm(std::string_view s, int& hh, int& mm);
+bool parse_hhmm(std::string_view s);
+
+bool parse_hhmm_helper(int hh, int mm);

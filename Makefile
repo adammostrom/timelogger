@@ -5,6 +5,7 @@
 
 CXX      := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Iinclude
+CXXTESTFLAGS := $(CXXFLAGS) -fsanitize=undefined 
 
 SRC       := \
 	src/cli.cpp \
@@ -24,7 +25,7 @@ TEST_OBJ := $(TEST_SRC:.cpp=.o)
 TARGET := timerlogger  # Name of final executable
 TEST_TARGET  := test_logger
 
-$(TARGET): $(CORE_OBJ) $(MAIN_OBJ)
+$(TARGET): $(SRC_OBJ) $(MAIN_OBJ)
 	$(CXX) $^ -o $@
 
 
@@ -43,4 +44,4 @@ test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
 $(TEST_TARGET): $(SRC_OBJ) $(TEST_OBJ)
-	$(CXX) $^ -o $@
+	$(CXX) $(CXXTESTFLAGS) $^ -o $@

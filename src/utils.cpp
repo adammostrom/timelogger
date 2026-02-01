@@ -1,5 +1,7 @@
 #include "utils.hpp"
 
+// Arithmetic
+
 long calculate_hour_from_seconds(long seconds)
 {
     if (seconds <= 0)
@@ -22,26 +24,23 @@ long calculate_secs_from_hour_min(long hour, long min)
     return (min * 60) + (hour * 3600);
 }
 
-// Directory
-
-/* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
-// Pure logic: returns true if directory exists or was successfully created
-bool ensure_directory_exists(const std::string &directory)
+int read_int()
 {
-    if (std::filesystem::exists(directory))
-        return true;
-
-    try
+    int v;
+    if (!(std::cin >> v))
     {
-        return std::filesystem::create_directory(directory);
+        std::cin.clear();                                                   // clear fail state
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // toss bad input
+        std::cout << "Invalid option. Try again.\n";
     }
-    catch (const std::filesystem::filesystem_error &)
-    {
-        return false;
-    }
+    return v;
 }
 
-bool parse_hhmm(std::string_view s, int &hh, int &mm)
+
+
+// Parsing
+
+bool parse_hhmm(std::string_view s)
 {
 
     // If input string is not 4 digits, exit
@@ -54,10 +53,15 @@ bool parse_hhmm(std::string_view s, int &hh, int &mm)
                      [](unsigned char c)
                      { return std::isdigit(c); }))
         return false;
+    return true;
+}
 
-    hh = std::stoi(std::string{s.substr(0, 2)});
-    mm = std::stoi(std::string{s.substr(2, 2)});
-
+bool parse_hhmm_helper(int hh, int mm)
+{
+    if (hh < 0 || mm < 0)
+    {
+        return false;
+    }
     if (hh > 23 || mm > 59)
         return false;
     return true;
@@ -77,28 +81,55 @@ std::optional<time_t> prompt_hhmm()
             return std::nullopt;
         }
 
-        int hh, mm;
-        if (!parse_hhmm(input, hh, mm))
+        if (!parse_hhmm(input))
         {
             std::cout << "Invalid format. Expected HHMM. \n";
             continue;
         }
+
+        int hh = std::stoi(std::string{input.substr(0, 2)});
+        int mm = std::stoi(std::string{input.substr(2, 2)});
+
+        if (!parse_hhmm_helper(hh, mm))
+        {
+            std::cout << "Invalid format. Expected HHMM \n";
+            continue;
+        }
+
         return convert_hhmm_to_epoch(hh, mm);
     }
 }
 
-std::string format_record(const LogEntry& logEntry)
-{
-    std::ostringstream oss;
-    oss << std::put_time(localtime(&logEntry.end), "%Y-%m-%d") << ","
-        << std::put_time(localtime(&logEntry.start), "%H:%M") << ","
-        << std::put_time(localtime(&logEntry.end), "%H:%M") << ","
-        << logEntry.break_tot_h << ":" << std::setw(2) << std::setfill('0') << logEntry.break_tot_m << ","
-        << logEntry.worked_h << ":" << std::setw(2) << std::setfill('0') << logEntry.worked_m << ","
-        << logEntry.worked_tot_h << ":" << std::setw(2) << std::setfill('0') << logEntry.worked_tot_m << "\n";
-    //<< note << "\n";
+// Formatting
 
+std::string format_record(const LogEntry& entry, const std::tm& start_tm, const std::tm& end_tm) {
+    std::ostringstream oss;
+    oss << std::put_time(&end_tm, "%Y-%m-%d") << ","
+        << std::put_time(&start_tm, "%H:%M") << ","
+        << std::put_time(&end_tm, "%H:%M") << ","
+        << entry.break_tot_h << ":" << std::setw(2) << std::setfill('0') << entry.break_tot_m << ","
+        << entry.worked_h << ":" << std::setw(2) << std::setfill('0') << entry.worked_m << ","
+        << entry.worked_tot_h << ":" << std::setw(2) << std::setfill('0') << entry.worked_tot_m << ","
+        << entry.note << "\n";
     return oss.str();
+}
+// Directory
+
+/* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
+// Pure logic: returns true if directory exists or was successfully created
+bool ensure_directory_exists(const std::string &directory)
+{
+    if (std::filesystem::exists(directory))
+        return true;
+
+    try
+    {
+        return std::filesystem::create_directory(directory);
+    }
+    catch (const std::filesystem::filesystem_error &)
+    {
+        return false;
+    }
 }
 
 std::vector<std::string> read_from_directory(const std::string &path)
@@ -111,16 +142,4 @@ std::vector<std::string> read_from_directory(const std::string &path)
         files.push_back(entry.path().filename());
     }
     return files;
-}
-
-int read_int()
-{
-    int v;
-    if (!(std::cin >> v))
-    {
-        std::cin.clear();                                                   // clear fail state
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // toss bad input
-        std::cout << "Invalid option. Try again.\n";
-    }
-    return v;
 }

@@ -2,47 +2,48 @@
 
 
 
-void get_current_worked(){
+StatusParams get_current_worked(){
+
+    StatusParams statusParams;
     
     long start_state = get_started();
 
-    if(start_state == 0){
+/*     if(start_state == 0){
         return;
-    }
+    } */
 
     long break_total = read_from_file(Files::BreakTotal.data());
 
     long break_hours = calculate_hour_from_seconds(break_total);
     long break_minutes = calculate_mins_from_seconds(break_total);
-
-
+    
     time_t now = get_current_time();
     long seconds = static_cast<int>(difftime(now,start_state)) - break_total;
-    
+
     if (seconds < 0) seconds = 0;
 
     long hours = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
 
-    // Todo: Make into data struct?
-    show_status(start_state, hours, minutes, break_hours, break_minutes);
+    statusParams.start_state = start_state;
+    statusParams.hours = hours;
+    statusParams.minutes = minutes;
+    statusParams.break_hours = break_hours;
+    statusParams.break_minutes = break_minutes;
+
+    return statusParams;
 }
 
 
 std::string epoch_to_hhmm(time_t epoch) {
     std::tm tm = *std::localtime(&epoch);
     std::ostringstream out;
-    out << std::put_time(&tm, "%H:%M \n");
+    out << std::put_time(&tm, "%H:%M");
     return out.str();
 }
 
 
-std::tuple<int, int> read_epoch_secs_convert_to_hhmm(const std::string &filename){
-    std::ifstream file(filename);
-
-    time_t epoch = 0;
-
-    file >> epoch;
+std::tuple<int, int> read_epoch_secs_convert_to_hhmm(time_t epoch){
 
     struct tm *timeinfo = localtime(&epoch); // convert to local time
 
