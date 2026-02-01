@@ -7,3 +7,5 @@
 docs/*
 datafiles/*
 tests/catch.hpp
+timerlogger
+src/*.o
