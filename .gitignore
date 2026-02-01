@@ -6,3 +6,4 @@
 .logged_total.txt
 docs/*
 datafiles/*
+tests/catch.hpp

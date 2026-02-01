@@ -16,6 +16,18 @@ void save_to_log(){
     // Total worked time (work time - break)
     long total_work_time = (elapsed - break_total) > 0 ? (elapsed - break_total) : 0;
 
+
+    // Important invariants!
+    if (start_state <= 0 || end_state <= 0) {
+        std::cerr << "Cannot save log: session not properly started or ended.\n";
+        return;
+    }   
+
+    if (end_state < start_state) {
+        std::cerr << "Invalid session: end before start.\n";
+        return;
+    }
+
 /* 
     ///////////////// UNDER CONSTRUCTION ////////////////////
     string note = "";
@@ -31,6 +43,8 @@ void save_to_log(){
 
     LogEntry logEntry;
 
+    logEntry.start = start_state;
+    logEntry.end   = end_state;
     logEntry.break_tot_h = calculate_hour_from_seconds(break_total);
     logEntry.break_tot_m = calculate_mins_from_seconds(break_total);
     logEntry.worked_h = calculate_hour_from_seconds(elapsed);
