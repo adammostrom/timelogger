@@ -9,3 +9,4 @@ datafiles/*
 tests/catch.hpp
 timerlogger
 src/*.o
+main.o
