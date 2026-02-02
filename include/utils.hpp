@@ -16,6 +16,7 @@ std::string format_record(const LogEntry& entry, const std::tm& start_tm, const 
 long calculate_hour_from_seconds(long seconds);
 long calculate_mins_from_seconds(long seconds);
 long calculate_secs_from_hour_min(long hour, long min);
+long calculate_secs_from_minutes(long minutes);
 
 
 bool is_manual_format_ok(int hh, int mm);
@@ -26,8 +27,6 @@ std::optional<time_t> prompt_hhmm();
 
 bool ensure_directory_exists(const std::string& directory);
 
-int read_int();
-
-bool parse_hhmm(std::string_view s);
+bool valid_string_hhmm(std::string_view s);
 
 bool parse_hhmm_helper(int hh, int mm);

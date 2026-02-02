@@ -33,13 +33,13 @@ TEST_CASE("Calculate seconds from hour and minutes"){
 
 // Takes a string of hhmm format, parses it to see if it is appropriate, if yes, writes the hh and mm to the arguments.
 TEST_CASE("Parse format hhmm if its accepted by numerics only, and appropriate sizes."){
-    REQUIRE(parse_hhmm("1630") == true);
-    REQUIRE(parse_hhmm("aabb") == false);
-    REQUIRE(parse_hhmm("-123") == false);
-    REQUIRE(parse_hhmm("123j") == false);
-    REQUIRE(parse_hhmm("1234") == true);
-    REQUIRE(parse_hhmm("0123") == true);
-    REQUIRE(parse_hhmm("999999999") == false);
+    REQUIRE(valid_string_hhmm("1630") == true);
+    REQUIRE(valid_string_hhmm("aabb") == false);
+    REQUIRE(valid_string_hhmm("-123") == false);
+    REQUIRE(valid_string_hhmm("123j") == false);
+    REQUIRE(valid_string_hhmm("1234") == true);
+    REQUIRE(valid_string_hhmm("0123") == true);
+    REQUIRE(valid_string_hhmm("999999999") == false);
 }
 
 

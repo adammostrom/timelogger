@@ -5,6 +5,16 @@
 #include "utils.hpp"
 #include <atomic>
 
+
+/*
+\033[H        → move cursor to top-left (row 1, col 1)
+\033[J        → clear screen from cursor down
+\033[2J       → clear entire screen
+\033[?25l     → hide cursor
+\033[?25h     → show cursor 
+ */
+
+
 std::vector<Command> commands = {
     {"Start", "s", start_calculator},
     {"End", "e", end_calculator},
@@ -43,7 +53,7 @@ int main()
         show_status();
 
         // Just prints the commands
-        print_main_menu(commands);
+        print_commands(commands);
 
         // Waits for a command to call
         Command operation = handle_input(commands);

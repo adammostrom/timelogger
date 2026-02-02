@@ -34,7 +34,7 @@ StatusParams get_current_worked(){
     return statusParams;
 }
 
-
+// Returns the string printout of epoch seconds
 std::string epoch_to_hhmm(time_t epoch) {
     std::tm tm = *std::localtime(&epoch);
     std::ostringstream out;
@@ -54,11 +54,8 @@ std::tuple<int, int> read_epoch_secs_convert_to_hhmm(time_t epoch){
     return std::make_tuple(hour, minute);
 }
 
-
-int convert_hhmm_to_epoch(int& hh, int& mm) {
-    // Extract HH and MM from "2330"
-/*     int hh = std::stoi(hhmm.substr(0, 2));
-    int mm = std::stoi(hhmm.substr(2, 2)); */
+// Convert given hour and minute into epoch
+time_t convert_hhmm_to_epoch(long hh, long mm) {
 
     // Get today's date
     std::time_t now = std::time(nullptr);
@@ -71,6 +68,17 @@ int convert_hhmm_to_epoch(int& hh, int& mm) {
 
     // Convert back to epoch
     return std::mktime(&local);
+}
+
+// Return the duration from epoch into format HH:MM
+std::string duration_to_hhmm(long seconds) {
+    int h = seconds / 3600;
+    int m = (seconds % 3600) / 60;
+    std::ostringstream oss;
+    oss << std::setw(2) << std::setfill('0') << h
+        << ":"
+        << std::setw(2) << std::setfill('0') << m;
+    return oss.str();
 }
 
 

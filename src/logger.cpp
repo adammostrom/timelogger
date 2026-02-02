@@ -1,5 +1,6 @@
 #include "logger.hpp"
 
+// TODO: REFACTOR
 void save_to_log(){
 
     confirm_directory_cli(DATA_DIRECTORY);
@@ -84,8 +85,7 @@ void save_to_log(){
 
 
 
-// Read the epoch time (seconds) from a file.
-// TODO: Maybe check this further
+// Read the epoch time (seconds) from a file. Returns 0 if file not found or if it failed to read for some reason.
 long read_from_file(const std::string &filename){
     auto tot = read_from_file_op(filename);
     if (tot) {
@@ -184,6 +184,7 @@ void create_logging_file(){
 }
 
 
+// Returns the filepath for the file to store the data.
 std::string file_to_log_data(){
 
     while(true){
@@ -191,7 +192,7 @@ std::string file_to_log_data(){
 
         print_log_files(datafiles);
 
-        size_t input = read_int();
+        size_t input = read_positive_integer();
 
         if(input == 0){
             create_logging_file();

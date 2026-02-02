@@ -21,26 +21,20 @@ long calculate_mins_from_seconds(long seconds)
 
 long calculate_secs_from_hour_min(long hour, long min)
 {
-    return (min * 60) + (hour * 3600);
+    return hour * 3600 + min * 60;
 }
 
-int read_int()
-{
-    int v;
-    if (!(std::cin >> v))
-    {
-        std::cin.clear();                                                   // clear fail state
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // toss bad input
-        std::cout << "Invalid option. Try again.\n";
+long calculate_secs_from_minutes(long minutes){
+    if(minutes <= 0){
+        return 0;
     }
-    return v;
+    return minutes * 60;
 }
-
 
 
 // Parsing
 
-bool parse_hhmm(std::string_view s)
+bool valid_string_hhmm(std::string_view s)
 {
 
     // If input string is not 4 digits, exit
@@ -62,10 +56,13 @@ bool parse_hhmm_helper(int hh, int mm)
     {
         return false;
     }
-    if (hh > 23 || mm > 59)
+    if (hh > 24 || mm > 60)
         return false;
     return true;
 }
+
+
+
 
 std::optional<time_t> prompt_hhmm()
 {
@@ -81,18 +78,18 @@ std::optional<time_t> prompt_hhmm()
             return std::nullopt;
         }
 
-        if (!parse_hhmm(input))
+        if (!valid_string_hhmm(input))
         {
             std::cout << "Invalid format. Expected HHMM. \n";
             continue;
         }
 
-        int hh = std::stoi(std::string{input.substr(0, 2)});
-        int mm = std::stoi(std::string{input.substr(2, 2)});
+        long hh = std::stoi(std::string{input.substr(0, 2)});
+        long mm = std::stoi(std::string{input.substr(2, 2)});
 
         if (!parse_hhmm_helper(hh, mm))
         {
-            std::cout << "Invalid format. Expected HHMM \n";
+            std::cout << "HH must be in range 0-24 and MM in range 0-60\n";
             continue;
         }
 

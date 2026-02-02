@@ -21,7 +21,7 @@ void confirm_directory_cli(const std::string& directory) {
 }
 
 
-void print_main_menu(const std::vector<Command>& commands){
+void print_commands(const std::vector<Command>& commands){
 
     std::cout << "Following commands available: \n";
     
@@ -31,37 +31,7 @@ void print_main_menu(const std::vector<Command>& commands){
 }
 
 
-// For state patch -> make this return a command to be called on in "OpState", and have the handler return the OpState
 
-Command handle_input(const std::vector<Command>& commands){
-
-    while(true){
-        std::cout << "> Enter command (q to quit): ";
-        std::string input;
-        std::cin >> input;
-       
-        if(input == "q"){
-            return commands[commands.size() - 1]; // Hardcoded for now
-        }
-        
-        bool is_number = !input.empty() && 
-        std::all_of(input.begin(), input.end(), [](char c) {return std::isdigit(static_cast<unsigned char>(c)); });
-        
-        if(is_number){
-            int index = std::stoi(input);
-    
-            if(index >= 0 && index <= commands.size()){
-                return commands[index];    
-            }
-        } else {
-            for (const Command& c : commands){
-                if( input == c.command){ return c;
-                }
-            }
-        }
-    std::cout << "Unknown command. \n";
-    }
-}
 
 
 // Can be used instead of the checking if session started, as well as gain value in returning the actual start state (in seconds).
@@ -83,138 +53,57 @@ int get_started(){
     return temp;
 }
 
-// TODO 2026-02-02
+// TODO 2026-02-02 REFACTOR (consider stripping the statusParams of some parameters, like break. Maybe not even needing it since we can do everything here with just hhmm string outputs)
 void show_status() {
-
-    if(get_started() == 0){
-        return;
-    }
+    if (get_started() == 0) return;
 
     StatusParams statusParams = get_current_worked();
 
-    long end_state = read_from_file(".end_state.txt");
-    
-    std::string end_s;
-    
-    if(end_state == 0){
-        end_s = "-----";
-    }else {
-        end_s = epoch_to_hhmm(end_state);
-    }
-
+    // Read absolute times
     long start_epoch = read_from_file(".start_state.txt");
-    long end_epoch = read_from_file(".end_state.txt");
+    long end_epoch   = read_from_file(".end_state.txt");
 
-    std::string end_start_diff;
+    // Determine "Logged End"
+    std::string end_s = (end_epoch == 0) ? "-----" : epoch_to_hhmm(end_epoch);
 
-    if(start_epoch == 0 || end_epoch == 0){
-        end_start_diff = "-----";
-    }else {
-        end_start_diff = epoch_to_hhmm(end_epoch-start_epoch);
-    }
-    std::tm* tm_start = localtime(&statusParams.start_state);
-    
-    
+    // Compute durations
+    long session_duration = (start_epoch && end_epoch && end_epoch >= start_epoch) 
+                            ? end_epoch - start_epoch : 0;
+
+    long break_total = read_from_file(".break_total.txt");
+
+    std::string break_string = duration_to_hhmm(break_total);
+
+    // Helper function for durations
+    auto duration_to_hhmm = [](long seconds) -> std::string {
+        int h = seconds / 3600;
+        int m = (seconds % 3600) / 60;
+        std::ostringstream oss;
+        oss << std::setw(2) << std::setfill('0') << h
+            << ":"
+            << std::setw(2) << std::setfill('0') << m;
+        return oss.str();
+    };
+
+    std::string end_start_diff = (session_duration > 0) ? duration_to_hhmm(session_duration) : "-----";
+
+    // Format start time safely
+    std::tm* tm_start = localtime(&start_epoch);
+
+    // Print table
     std::cout << "\033[1;36m"
               << "┌──────────────────────────────────────────┐\n"
               << " * Started              : " << std::put_time(tm_start, "%H:%M") << "\n"
-              << " * Session since Start  : " << statusParams.hours<< "h " << statusParams.minutes << "m" << "\n"
-              << " * Breaks               : "
-              << std::setw(2) << std::setfill('0') << statusParams.break_hours << ":"
-              << std::setw(2) << std::setfill('0') << statusParams.break_minutes << "\n"
+              << " * Session since Start  : " << statusParams.hours << "h " << statusParams.minutes << "m" << "\n"
+              << " * Breaks               : " << break_string << "\n"
               << " * Logged End           : " << std::setw(5) << std::left << end_s << "\n"
-              << " * End - Start diff     : " <<  end_start_diff <<"\n"
-              << "└──────────────────────────────────────────┘\033[0m\n";
+              << " * End - Start diff     : " << end_start_diff << "\n"
+<< "└──────────────────────────────────────────┘\033[0m\n";
 
     std::cout << std::setfill(' ');  // reset fill
 }
 
 
-
-void manual_entry(const std::string &filename) {
-    // Prompt user for HHMM input
-    auto result = prompt_hhmm();
-    if (!result.has_value()) {
-        std::cout << "Input cancelled.\n";
-        return;
-    }
-    time_t entered_time = result.value();
-
-    // Read the current opposite time for validation
-    long other_time = 0;
-    if (filename == ".start_state.txt") {
-        other_time = read_from_file(".end_state.txt");
-        if (other_time > 0 && entered_time > other_time) {
-            std::cout << "Start session cannot be after current end time!\n";
-            return;
-        }
-    } else if (filename == ".end_state.txt") {
-        other_time = read_from_file(".start_state.txt");
-        if (other_time > 0 && entered_time < other_time) {
-            std::cout << "End session time cannot predate start session time!\n";
-            return;
-        }
-    }
-
-    // Confirm with user before saving
-    std::string message = "The time entered is: " + epoch_to_hhmm(entered_time) + ". Save time? ";
-    if (!confirm(message)) {
-        std::cout << "Input not saved.\n";
-        return;
-    }
-
-    // Save to file
-    if (save_to_file(filename, entered_time)) {
-        std::cout << "Time saved: " << epoch_to_hhmm(entered_time) << "\n";
-    } else {
-        std::cout << "Failed to save time.\n";
-    }
-}
-
-void manual_break_entry(){
-
-    auto result = prompt_hhmm();
-    if (!result.has_value()) {
-        std::cout << "Invalid input.\n";
-        return;
-    }
-
-    time_t secs = result.value();
-
-    time_t tot = read_from_file(".break_total.txt");
-
-    tot += secs;
-    
-    std::string message = std::string("The time entered is: ") + epoch_to_hhmm(tot) + ". Save time registered? ";
-
-    if(!confirm(message)){
-        std::cout << "Break time not saved\n";
-        return;
-    } 
-    
-    save_to_file(".break_total.txt", tot);
-
-}
-
-
-void manual_session_entry(){
-
-    if(get_started() > 0){
-        if(!confirm("Warning. Session already logged as started. Proceeding will overwrite.")){
-            std::cout << "Cancelled.\n";
-            return;
-        }
-    }
-    manual_entry(".start_state.txt");
-}
-
-void manual_end_entry(){
-    if(get_started() < 1){
-        throw std::runtime_error("Session not started. Cannot end non-started session.\n");
-    }
-
-    manual_entry(".end_state.txt");
-}
 
 void input_thread(){
     std::string s;
@@ -228,97 +117,6 @@ void input_thread(){
 }
 
 
-// TODO
-void break_start(){
-
-    time_t now_c = get_current_time();
-
-    save_to_file(".break_start.txt", now_c);
-
-    std::thread t(input_thread); 
-
-    std::cout << "Break started. Press q to cancel the break. \n";
-
-
-    int total = 0;
-    while (!quit_flag()) {
-
-        time_t elapsed = time(nullptr) - now_c;  // seconds since break started
-        long hours = calculate_hour_from_seconds(elapsed);
-        int minutes = calculate_mins_from_seconds(elapsed);
-        int seconds = elapsed % 60;
-
-        std::cout << "\rOn break: " << hours << ":" << (minutes < 10 ? "0" : "") << minutes << ":" 
-        << (seconds < 10 ? "0" : "") << seconds << "   >" << std::flush;
-
-        total++;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    }
-    t.join();
-
-    break_stop();
-}
-
-
-// TODO
-int break_stop(){
-/*     ifstream break_start_file(".break_start.txt");
-
-    time_t start;
-    break_start_file >> start;
-    break_start_file.close(); */
-
-    long start = read_from_file(".break_start.txt");
-
-    time_t now_c = get_current_time();
-
-    // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes 
-    long seconds = static_cast<int>(difftime(now_c,start));
-    long hours = calculate_hour_from_seconds(seconds);
-    long minutes = calculate_mins_from_seconds(seconds);
-
-    // Add to the total
-    int total = 0;
-    std::ifstream totalFile(".break_total.txt");
-    if(totalFile) {
-        // If we already have a file, assume it has break already logged, read to total
-        totalFile >> total;
-    }
-    totalFile.close();
-
-    total += seconds;
-    int remains = seconds % 60;
-
-    
-
-    std::cout << "Break ended. Summary: " << hours << std::setw(2) << std::setfill('0') << " hours, " 
-                                     << minutes << std::setw(2) << std::setfill('0') << " minutes and " 
-                                     << remains << " seconds. \nSave break period? (yes/no) \n"
-                                     << "or e for edit \n";
-
-    
-    std::string command;
-    std::cin >> command;
-
-    if(command == "e"){
-        manual_break_entry();
-    }
-
-    if(command == "no"){
-        std::cout << "Break period not saved. \n";
-        return 0;
-    }
-
-    std::cout << "Break period saved. \n";
-
-    std::ofstream saveTotal(".break_total.txt");
-    saveTotal << total;
-    saveTotal.close();
-
-    return 0;
-
-}
 
 // expand to be select of which files to clear
 void clear_temp_files_wrapper(){
@@ -336,30 +134,7 @@ void clear_temp_files_wrapper(){
 }
 
 
-bool confirm(const std::string& message) {
 
-    while(true){
-        std::cout << message << "(y/n, c to cancel) \n";
-    
-        std::string input;
-        //std::cin.ignore(numeric_limits<streamsize>::max(), '\n');  
-        //getline(std::cin, input);
-    
-        std::cin >> input;
-        // lowercase input
-        std::transform(input.begin(), input.end(), input.begin(), ::tolower);
-    
-        if (input == "yes" || input == "y") {
-            return true; // accepted
-        }
-        if(input == "c" || input == "n"){
-            return false;
-        }
-        return false; // anything else = reject
-
-    }
-    std::cout << "Invalid input.\n";
-}
 
 // Pure logic: returns true if name is valid
 bool is_name_valid(const std::string& name) {
@@ -393,3 +168,5 @@ void print_log_files(const std::vector<std::string>& datafiles){
     std::cout << "0. " << "Create new datafile \n";
         
 }
+
+
