@@ -3,6 +3,7 @@
 #include "data_structures.hpp"
 #include "files.hpp"
 #include "cli.hpp"
+#include "error_handling.hpp"
 
 #include <string>
 #include <filesystem>
@@ -10,15 +11,11 @@
 #include <optional>
 
 
-void create_logging_file();
+Result<std::filesystem::path> create_log_file(const std::string& name);
 
 void save_to_log();
 
 bool save_to_file(const std::string &filename, time_t tot);
-
-long read_from_file(const std::string &filename);
-
-std::string file_to_log_data();
 
 bool clear_file(const std::string &filename);
 

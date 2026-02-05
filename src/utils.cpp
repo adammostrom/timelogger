@@ -114,18 +114,19 @@ std::string format_record(const LogEntry& entry, const std::tm& start_tm, const 
 
 /* Check to see if the directory with the datafiles exists. If none exist for some reason, it will be created. */
 // Pure logic: returns true if directory exists or was successfully created
-bool ensure_directory_exists(const std::string &directory)
-{
+Result<bool> ensure_directory_exists(const std::string &directory){
+    
     if (std::filesystem::exists(directory))
-        return true;
+        return { true, LogError::None };
 
     try
     {
-        return std::filesystem::create_directory(directory);
+        bool created = std::filesystem::create_directory(directory);
+        return {created, LogError::None};
     }
-    catch (const std::filesystem::filesystem_error &)
+    catch (const std::filesystem::filesystem_error&)
     {
-        return false;
+        return {false, LogError::CreateDirFailed};  // If it fails to create a directory for some reason
     }
 }
 
@@ -139,4 +140,22 @@ std::vector<std::string> read_from_directory(const std::string &path)
         files.push_back(entry.path().filename());
     }
     return files;
+}
+
+
+// Read the epoch time (seconds) from a file. Returns 0 if file not found or if it failed to read for some reason.
+Result<long> read_from_file(const std::string &filename){
+
+    std::ifstream file(filename);
+    
+    long tot;
+    
+    if (!file) return {0, LogError::FileNotExist};
+
+    if (file.peek() == std::ifstream::traits_type::eof()) return {0, LogError::NoneIntegerData};
+
+    if (!(file >> tot)) return {0, LogError::ReadFileFailed};
+    
+    return {tot, LogError::None};
+
 }

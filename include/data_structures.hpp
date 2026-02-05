@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
+
 // Command structure for adding and editing commands in the start menu.
 struct Command
 {
@@ -29,3 +32,43 @@ struct StatusParams {
     long break_hours;
     long break_minutes;
 };
+
+//     file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min,notes \n"; 
+struct CsvField {
+    std::string name;
+};
+
+// Implement in create_log_file
+const std::vector<CsvField> logFields = {
+    {"DATE"},
+    {"START"},
+    {"END"},
+    {"BREAK(H:M)"},
+    {"WORK(H:M)"},
+    {"TOTAL(H:M)"},
+    {"NOTES"}
+};
+
+enum class LogError {
+    None,
+    InvalidName,
+    CreateDirFailed,
+    CreateFileFailed,
+    SaveToLogFailed,
+    PermissionDenied,
+    ReadFileFailed,
+    FailedToOpenFile,
+    NoneIntegerData,
+    FileNotExist
+};
+
+
+template <typename T>
+
+struct Result {
+    T value;
+    LogError error;
+
+    bool ok() const { return error == LogError::None; }
+};
+

@@ -3,13 +3,34 @@
 // TODO: REFACTOR
 void save_to_log(){
 
-    confirm_directory_cli(DATA_DIRECTORY);
+    // Ensure directory exists in order to store the data.
+    auto dir_status = ensure_directory_exists(DATA_DIRECTORY);
+    if(!dir_status.ok()){
+        print_log_error(dir_status.error);  // Find a way to also emit the value
+        return;
+    }
 
-    long break_total = read_from_file(".break_total.txt");
+    auto break_log = read_from_file(".break_total.txt");
+    if(!break_log.ok()){
+        print_log_error(break_log.error);
+        return;
+    }
+    long break_total = break_log.value;
 
-    long end_state = read_from_file(".end_state.txt");
-    
-    long start_state = read_from_file(".start_state.txt");
+    auto end_state_log = read_from_file(".end_state.txt");
+    if(!end_state_log.ok()){
+        print_log_error(end_state_log.error);
+        return;
+    }
+    long end_state = end_state_log.value;
+
+    auto start_state_log = read_from_file(".start_state.txt");
+    if(!start_state_log.ok()){
+        print_log_error(start_state_log.error);
+        return;
+    }
+    long start_state = start_state_log.value;
+
     
     // Work time (hours:mins)
     long elapsed = (end_state - start_state) > 0 ? (end_state - start_state) : 0;
@@ -18,7 +39,9 @@ void save_to_log(){
     long total_work_time = (elapsed - break_total) > 0 ? (elapsed - break_total) : 0;
 
 
-    // Important invariants!
+/*     // Important invariants!
+
+    2026-02-05 Make a util function that checks this when "end session" or "manual end session" are called, we dont need the checks here.
     if (start_state <= 0 || end_state <= 0) {
         std::cerr << "Cannot save log: session not properly started or ended.\n";
         return;
@@ -28,9 +51,9 @@ void save_to_log(){
         std::cerr << "Invalid session: end before start.\n";
         return;
     }
+ */
 
-
-    ///////////////// UNDER CONSTRUCTION ////////////////////
+    // TODO: Make into separate CLI function
 
     std::string note;
     std::cout << "(Optional): Add note. (c to ignore)\n";
@@ -51,10 +74,10 @@ void save_to_log(){
 
     logEntry.start = start_state;
     logEntry.end   = end_state;
-    logEntry.break_tot_h = calculate_hour_from_seconds(break_total);
-    logEntry.break_tot_m = calculate_mins_from_seconds(break_total);
-    logEntry.worked_h = calculate_hour_from_seconds(elapsed);
-    logEntry.worked_m = calculate_mins_from_seconds(elapsed);
+    logEntry.break_tot_h  = calculate_hour_from_seconds(break_total);
+    logEntry.break_tot_m  = calculate_mins_from_seconds(break_total);
+    logEntry.worked_h     = calculate_hour_from_seconds(elapsed);
+    logEntry.worked_m     = calculate_mins_from_seconds(elapsed);
     logEntry.worked_tot_h = calculate_hour_from_seconds(total_work_time);
     logEntry.worked_tot_m = calculate_mins_from_seconds(total_work_time);
     logEntry.note = note;
@@ -85,18 +108,9 @@ void save_to_log(){
 
 
 
-// Read the epoch time (seconds) from a file. Returns 0 if file not found or if it failed to read for some reason.
-long read_from_file(const std::string &filename){
-    auto tot = read_from_file_op(filename);
-    if (tot) {
-        return *tot;
-    } else {
-        return 0;
-    }
 
-}
 
-std::optional<long> read_from_file_op(const std::string &filename) {
+/* std::optional<long> read_from_file_op(const std::string &filename) {
     std::ifstream file(filename);
     if (!file) return std::nullopt;
 
@@ -106,7 +120,7 @@ std::optional<long> read_from_file_op(const std::string &filename) {
     if (!(file >> tot)) return std::nullopt;
 
     return tot;
-}
+} */
 
 // Read the old value first, then add the new one.
 bool save_to_file(const std::string &filename, time_t tot){
@@ -155,57 +169,23 @@ bool clear_file(const std::string& filename) {
     return file.good();
 }
 
-void create_logging_file(){
-    std::cout << "Give a name for the logging file, minimum 4 characters, max 30 characters: " << std::endl; 
-    std::string name;
-    std::cin >> name;
-    while(!check_name_cli(name)){
-        std::cout << "Try again: " << std::endl;
-        std::cin >> name;
-    }
+
+// TODO: Do I really want to return filesystem::path?
+Result<std::filesystem::path> create_log_file(const std::string& name){
 
     std::filesystem::path destination = std::filesystem::path(DATA_DIRECTORY) / (name + ".csv");
-
-
-    confirm_directory_cli(DATA_DIRECTORY);
 
     // Create the file at destination
     std::ofstream file(destination);
     if (!file) {
-        std::cerr << "Failed to create file: " << destination << "\n";
-        //return 1;
+        return {destination, LogError::CreateFileFailed};
     }
 
-    file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min \n"; 
+    file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min,notes \n"; 
     file.close();
 
-    std::cout << "Created file: " << destination << "\n";
-    // return 0
+    return {destination, LogError::None}; // TODO, return destination even if successfull?
 }
 
 
-// Returns the filepath for the file to store the data.
-std::string file_to_log_data(){
 
-    while(true){
-        auto datafiles = read_from_directory(DATA_DIRECTORY); 
-
-        print_log_files(datafiles);
-
-        size_t input = read_positive_integer();
-
-        if(input == 0){
-            create_logging_file();
-            continue;
-        }
-
-        if(input < 1 || input > datafiles.size()){
-            std::cout << "Invalid option. Try again.\n";
-            continue;
-        }
-
-        // use filesystem::path
-        std::filesystem::path fullpath = std::filesystem::path(DATA_DIRECTORY) / datafiles[input - 1];
-        return fullpath.string();  
-    }
-}

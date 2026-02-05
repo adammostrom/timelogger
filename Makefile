@@ -12,7 +12,8 @@ SRC       := \
 	src/logger.cpp \
 	src/timer.cpp \
 	src/utils.cpp \
-	src/cli_input.cpp
+	src/error_handling.cpp
+
 
 TEST_SRC := tests/test_utils.cpp
 MAIN_SRC  := main.cpp
