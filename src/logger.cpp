@@ -157,28 +157,35 @@ Result<std::string> save_to_file(const std::string &filename, time_t tot){
 
 
 
-bool clear_temp_files_operation(){
-    bool ok = true;
-    // Returns true only if all calls return true.
-    ok &= clear_file(Files::BreakStart.string());
-    ok &= clear_file(Files::BreakTotal.string());
-    ok &= clear_file(Files::SessionStart.string());
-    ok &= clear_file(Files::SessionEnd.string());
-    
-    return ok;
-}
+// Tries to remove a file safely. Returns true if file didn't exist or was removed successfully.
+bool safe_delete_file(const std::filesystem::path& filepath) {
+    if (!std::filesystem::exists(filepath)) {
+        return true; // nothing to delete, consider success
+    }
 
-bool clear_file(const std::string& filename) {
-    std::ofstream file(filename, std::ios::trunc); // open in truncate mode
+    std::error_code ec;
+    std::filesystem::remove(filepath, ec);
 
-    std::ifstream check(filename);
-    check.seekg(0, std::ios::end);
-    if (check.tellg() != 0) {
+    if (ec) {
+        std::cerr << "Failed to delete file: " << filepath << " (" << ec.message() << ")\n";
         return false;
     }
-    return file.good();
+
+    return !std::filesystem::exists(filepath); // confirm deletion
 }
 
+// Deletes all temp files and reports errors individually
+bool clear_temp_files_operation() {
+    bool ok = true;
+
+    ok &= safe_delete_file(Files::BreakStart);
+    ok &= safe_delete_file(Files::BreakTotal);
+    ok &= safe_delete_file(Files::SessionStart);
+    ok &= safe_delete_file(Files::SessionEnd);
+    ok &= safe_delete_file(Files::SessionTotal);
+
+    return ok;
+}
 
 // TODO: Do I really want to return filesystem::path?
 Result<std::filesystem::path> create_log_file(const std::string& name){

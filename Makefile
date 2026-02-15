@@ -14,6 +14,11 @@ SRC       := \
 	src/utils.cpp \
 	src/error_handling.cpp
 
+TMP        := \
+		.break_start.txt \
+		.break_total.txt \
+		.session_end.txt \
+		.session_start.txt
 
 TEST_SRC := tests/test_utils.cpp
 MAIN_SRC  := main.cpp
@@ -40,7 +45,7 @@ run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -f $(SRC_OBJ) $(MAIN_OBJ) $(TEST_OBJ) $(TARGET) $(TEST_TARGET)
+	rm -f $(SRC_OBJ) $(MAIN_OBJ) $(TEST_OBJ) $(TARGET) $(TEST_TARGET) $(TMP)
 
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)

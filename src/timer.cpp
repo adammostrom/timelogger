@@ -174,7 +174,8 @@ void end_break(){
     } else {
         std::cout << "Break end time saved: " << epoch_to_hhmm(now_c) << "\n";
     }
-    std::remove(Files::BreakStart.c_str());
+    safe_delete_file(Files::BreakStart.c_str());
+    //std::remove(Files::BreakStart.c_str());
 }
 
 

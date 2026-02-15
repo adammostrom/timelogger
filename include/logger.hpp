@@ -24,3 +24,5 @@ bool clear_temp_files_operation();
 bool overwrite_file_int(const std::string &filename, int value);
 
 std::optional<long> read_from_file_op(const std::string &filename);
+
+bool safe_delete_file(const std::filesystem::path& filepath);
