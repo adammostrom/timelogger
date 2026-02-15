@@ -16,6 +16,10 @@ void start_calculator();
 
 void end_calculator();
 
+void end_break();
+
+void start_break();
+
 void break_start();
 
 int break_stop();

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "data_structures.hpp"
+#include "error_handling.hpp"
 #include "files.hpp"
 #include "timer.hpp"
 #include "utils.hpp"
-#include "error_handling.hpp"
 
 #include <string>
 #include <vector>
@@ -51,7 +51,7 @@ void confirm_directory_cli(const std::string& directory);
 
 void input_thread();
 
-bool prompt_valid_filename(std::string name)
+bool prompt_valid_filename(std::string name);
 
 std::optional<std::string> prompt_name();
 
@@ -59,7 +59,7 @@ void print_log_files(const std::vector<std::string>& datafiles);
 
 bool confirm_logging(const std::string &record);
 
-bool confirm(const std::string &message);
+ConfirmResult confirm();
 
 void manual_break_entry();
 
@@ -75,4 +75,8 @@ long read_positive_integer();
 
 Command handle_input(const std::vector<Command> &commands);
 
-std::optional<std::filesystem::path> file_to_log_data()
+std::optional<std::filesystem::path> file_to_log_data();
+
+std::optional<std::string> prompt_name();
+
+long start_timer(time_t now_c);

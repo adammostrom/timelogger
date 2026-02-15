@@ -36,3 +36,5 @@ bool valid_string_hhmm(std::string_view s);
 bool parse_hhmm_helper(int hh, int mm);
 
 Result<long> read_from_file(const std::string &filename);
+
+Result<long> get_temp_file_state(const std::string &filename);

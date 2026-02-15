@@ -27,7 +27,7 @@ void print_commands(const std::vector<Command> &commands)
 
     std::cout << "Following commands available: \n";
 
-    for (int i = 0; i < commands.size() - 1; i++)
+    for (long unsigned int i = 0; i < commands.size() - 1; i++)
     {
         std::cout << "\t" << "[" << std::to_string(i) << "]" << "." + commands[i].name << " (" << commands[i].command << ")" << std::endl;
     }
@@ -62,12 +62,12 @@ void show_status()
     StatusParams statusParams = get_current_worked();
 
     // Read absolute times
-    long start_epoch = read_from_file(".start_state.txt").value;
+    long start_epoch = read_from_file(Files::SessionStart).value;
 
     if(start_epoch == 0){
         return;
     }
-    long end_epoch = read_from_file(".end_state.txt");
+    long end_epoch = read_from_file(Files::SessionEnd).value;
 
     // Determine "Logged End"
     std::string end_s = (end_epoch == 0) ? "-----" : epoch_to_hhmm(end_epoch);
@@ -77,7 +77,7 @@ void show_status()
                                 ? end_epoch - start_epoch
                                 : 0;
 
-    long break_total = read_from_file(".break_total.txt");
+    long break_total = read_from_file(Files::BreakTotal).value;
 
     std::string break_string = duration_to_hhmm(break_total);
 
@@ -129,9 +129,9 @@ void input_thread()
 void clear_temp_files_wrapper()
 {
 
-    std::string message = "Clear temporary files? Current data will be erased! \n";
+    std::cout << "Clear temporary files? Current data will be erased! \n";
 
-    if (confirm(message))
+    if (confirm() == ConfirmResult::Yes)
     {
         clear_temp_files_operation();
         std::cout << "Temporary files cleared! \n";
@@ -228,7 +228,6 @@ void print_log_files(const std::vector<std::string> &datafiles)
 // TODO: Refactor to return Result
 std::optional<std::filesystem::path> file_to_log_data(){
 
-    int input;
 
     auto dir_log = ensure_directory_exists(DATA_DIRECTORY);
     if (!dir_log.ok())
@@ -280,18 +279,18 @@ void manual_entry(const std::string &filename)
 
     // Read the current opposite time for validation
     long other_time = 0;
-    if (filename == ".start_state.txt")
+    if (filename == Files::SessionStart)
     {
-        other_time = read_from_file(".end_state.txt").value;
+        other_time = read_from_file(Files::SessionEnd).value;
         if (other_time > 0 && entered_time > other_time)
         {
             std::cout << "Start session cannot be after current end time!\n";
             return;
         }
     }
-    else if (filename == ".end_state.txt")
+    else if (filename == Files::SessionEnd)
     {
-        other_time = read_from_file(".start_state.txt").value;
+        other_time = read_from_file(Files::SessionStart).value;
         if (other_time > 0 && entered_time < other_time)
         {
             std::cout << "End session time cannot predate start session time!\n";
@@ -300,22 +299,21 @@ void manual_entry(const std::string &filename)
     }
 
     // Confirm with user before saving
-    std::string message = "The time entered is: " + epoch_to_hhmm(entered_time) + ". Save time? ";
-    if (!confirm(message))
+    std::cout <<  "The time entered is: " << epoch_to_hhmm(entered_time) << ". Save time? ";
+    if (confirm() == ConfirmResult::No)
     {
         std::cout << "Input not saved.\n";
         return;
     }
 
+    auto res = save_to_file(filename,entered_time);
+    if(!res.ok()){
+        std::cout << "Time not saved for: " << res.value;
+        print_log_error(res.error);
+        return;
+    }
     // Save to file
-    if (save_to_file(filename, entered_time))
-    {
-        std::cout << "Time saved: " << epoch_to_hhmm(entered_time) << "\n";
-    }
-    else
-    {
-        std::cout << "Failed to save time.\n";
-    }
+    std::cout << "Time saved: " << epoch_to_hhmm(entered_time) << "\n";
 }
 
 void manual_break_entry()
@@ -328,14 +326,14 @@ void manual_break_entry()
 
     long secs = input_mins * 60;
 
-    time_t tot = read_from_file(".break_total.txt").value;
+    time_t tot = read_from_file(Files::BreakTotal).value;
 
     tot += secs;
     std::cout << "Break time for logging: " << std::to_string(input_mins) <<  " minutes. Proceed? ";
 
     if (confirm() == ConfirmResult::Yes)
     {
-        save_to_file(".break_total.txt", tot);
+        save_to_file(Files::BreakTotal, tot);
         return;
     }
     std::cout << "Break time not saved\n";
@@ -345,12 +343,12 @@ void manual_break_entry()
 
 void manual_session_entry(){
 
-    if (read_from_file(".start_state.txt").value > 0)
+    if (read_from_file(Files::SessionStart).value > 0)
     {
         std::cout <<  "Warning. Session already logged as started. Proceeding will overwrite.";
         if (confirm() == ConfirmResult::Yes)
         {
-            manual_entry(".start_state.txt");
+            manual_entry(Files::SessionStart);
             return;
         }
     }
@@ -358,19 +356,29 @@ void manual_session_entry(){
     return;
 }
 
+
+
 void manual_end_entry()
 {
-    if (get_started() < 1)
-    {
-        throw std::runtime_error("Session not started. Cannot end non-started session.\n");
+    auto res = read_from_file(Files::SessionStart);
+
+    if(!res.ok()){
+        print_log_error(res.error);
+        return;
     }
 
-    manual_entry(".end_state.txt");
+    if(res.value < 1){
+        std::cout << "Session not started. Cannot end non-started session.\n";
+        return;
+    }
+
+    manual_entry(Files::SessionEnd);
 }
 
 // 2026-02-05: Refactored (it handles a lot of subfunctions, but it doesnt compute anything nor does it make any decisions)
 // is a use-case function (also called an orchestration or application-service function).
 // it does many things — but it does not decide many things.
+
 void break_start()
 {
 
@@ -385,7 +393,7 @@ void break_start()
     long hours   = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
 
-    auto break_tot_log = read_from_file(".break_total.txt");
+    auto break_tot_log = read_from_file(Files::BreakTotal);
     if(!break_tot_log.ok()){
         print_log_error(break_tot_log.error);
         return;
@@ -411,10 +419,12 @@ void break_start()
     }
 
     long total = break_tot_log.value + elapsed;
-    save_to_file(".break_total.txt", total);
+    save_to_file(Files::BreakTotal, total);
 
     std::cout << "Break period saved.\n";
 }
+
+
 
 // Runs a timer and stops when user cancels with "q", otherwise returns the elapsed.
 long start_timer(time_t now_c){
@@ -467,16 +477,11 @@ long read_positive_integer()
     }
 }
 
-enum class ConfirmResult {
-    Yes,
-    No,
-    Cancel
-};
 
 ConfirmResult confirm()
 {
+    std::cout << " (y/n, c to cancel)\n";
     while (true) {
-        std::cout << " (y/n, c to cancel)\n";
 
         std::string input;
         if (!(std::cin >> input))
@@ -489,7 +494,7 @@ ConfirmResult confirm()
         if (input == "n" || input == "no")  return ConfirmResult::No;
         if (input == "c")                   return ConfirmResult::Cancel;
 
-        std::cout << "Invalid input.\n";
+        std::cout << "Invalid input. Try again \n";
     }
 }
 

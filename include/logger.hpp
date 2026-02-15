@@ -15,7 +15,7 @@ Result<std::filesystem::path> create_log_file(const std::string& name);
 
 void save_to_log();
 
-bool save_to_file(const std::string &filename, time_t tot);
+Result<std::string> save_to_file(const std::string &filename, time_t tot);
 
 bool clear_file(const std::string &filename);
 

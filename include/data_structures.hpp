@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-
 // Command structure for adding and editing commands in the start menu.
 struct Command
 {
@@ -12,8 +11,8 @@ struct Command
     void (*action)();
 };
 
-
-struct LogEntry {
+struct LogEntry
+{
     long start;
     long end;
     long break_tot_h;
@@ -25,7 +24,8 @@ struct LogEntry {
     std::string note;
 };
 
-struct StatusParams {
+struct StatusParams
+{
     long start_state;
     long hours;
     long minutes;
@@ -33,8 +33,16 @@ struct StatusParams {
     long break_minutes;
 };
 
-//     file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min,notes \n"; 
-struct CsvField {
+enum class ConfirmResult
+{
+    Yes,
+    No,
+    Cancel
+};
+
+//     file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min,notes \n";
+struct CsvField
+{
     std::string name;
 };
 
@@ -46,29 +54,4 @@ const std::vector<CsvField> logFields = {
     {"BREAK(H:M)"},
     {"WORK(H:M)"},
     {"TOTAL(H:M)"},
-    {"NOTES"}
-};
-
-enum class LogError {
-    None,
-    InvalidName,
-    CreateDirFailed,
-    CreateFileFailed,
-    SaveToLogFailed,
-    PermissionDenied,
-    ReadFileFailed,
-    FailedToOpenFile,
-    NoneIntegerData,
-    FileNotExist
-};
-
-
-template <typename T>
-
-struct Result {
-    T value;
-    LogError error;
-
-    bool ok() const { return error == LogError::None; }
-};
-
+    {"NOTES"}};

@@ -63,7 +63,7 @@ bool parse_hhmm_helper(int hh, int mm)
 
 
 
-
+// TODO 2026-02-11: Move to CLI
 std::optional<time_t> prompt_hhmm()
 {
 
@@ -97,6 +97,8 @@ std::optional<time_t> prompt_hhmm()
     }
 }
 
+
+// TODO: 2026-02-11 Move to CLi since it has to do with output
 // Formatting
 
 std::string format_record(const LogEntry& entry, const std::tm& start_tm, const std::tm& end_tm) {
@@ -144,18 +146,18 @@ std::vector<std::string> read_from_directory(const std::string &path)
 
 
 // Read the epoch time (seconds) from a file. Returns 0 if file not found or if it failed to read for some reason.
+// 2026-02-15 Changed to return negative instead.
 Result<long> read_from_file(const std::string &filename){
 
     std::ifstream file(filename);
     
     long tot;
     
-    if (!file) return {0, LogError::FileNotExist};
+    if (!file) return {0, LogError::None};
 
-    if (file.peek() == std::ifstream::traits_type::eof()) return {0, LogError::NoneIntegerData};
-
-    if (!(file >> tot)) return {0, LogError::ReadFileFailed};
+    if (!(file >> tot)) return {-1, LogError::ReadFileFailed};
     
     return {tot, LogError::None};
 
 }
+

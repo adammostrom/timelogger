@@ -6,11 +6,12 @@
 
 namespace Files {
     
-    inline constexpr std::string_view BreakStart  = ".break_start.txt";
-    inline constexpr std::string_view BreakTotal  = ".break_total.txt";
-    inline constexpr std::string_view EndState    = ".end_state.txt";
-    inline constexpr std::string_view StartState  = ".start_state.txt";
-    inline constexpr std::string_view LoggedTotal = ".logged_total.txt";
+    inline const std::filesystem::path BreakStart    = ".break_start.txt";
+    inline const std::filesystem::path BreakTotal    = ".break_total.txt";
+    inline const std::filesystem::path BreakEnd      = ".break_end.txt";
+    inline const std::filesystem::path SessionEnd    = ".session_end.txt";
+    inline const std::filesystem::path SessionStart  = ".session_start.txt";
+    inline const std::filesystem::path SessionTotal  = ".session_total.txt";
 
 }
 

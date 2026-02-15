@@ -1,6 +1,13 @@
 #include "logger.hpp"
 
 // TODO: REFACTOR
+// TODO 2026-02-11 : add helper functions that store backups to prevent erasing data: 
+
+/*
+std::filesystem::copy_file(path, path.string() + ".bak",
+                           std::filesystem::copy_options::overwrite_existing);
+
+*/
 void save_to_log(){
 
     // Ensure directory exists in order to store the data.
@@ -10,21 +17,21 @@ void save_to_log(){
         return;
     }
 
-    auto break_log = read_from_file(".break_total.txt");
+    auto break_log = read_from_file(Files::BreakTotal);
     if(!break_log.ok()){
         print_log_error(break_log.error);
         return;
     }
     long break_total = break_log.value;
 
-    auto end_state_log = read_from_file(".end_state.txt");
+    auto end_state_log = read_from_file(Files::SessionEnd);
     if(!end_state_log.ok()){
         print_log_error(end_state_log.error);
         return;
     }
     long end_state = end_state_log.value;
 
-    auto start_state_log = read_from_file(".start_state.txt");
+    auto start_state_log = read_from_file(Files::SessionStart);
     if(!start_state_log.ok()){
         print_log_error(start_state_log.error);
         return;
@@ -65,9 +72,10 @@ void save_to_log(){
         note.clear();
     }
         
-    std::string datafile = file_to_log_data();
-    std::cout << datafile + " selected \n";
-    std::ofstream log_file(datafile, std::ios::app); // append mode
+    std::optional<std::filesystem::path> datafile = file_to_log_data();
+
+    std::cout << datafile.value().string() + " selected \n";
+    std::ofstream log_file(datafile.value().string(), std::ios::app); // append mode
 
 
     LogEntry logEntry;
@@ -89,10 +97,10 @@ void save_to_log(){
 
 
 
-    std::string message =  "NOTE: The following data will be written and stored: " + logging_record 
-        + "to: " + datafile + "\n" + "Save this record? \n";
+    std::cout <<   "NOTE: The following data will be written and stored: " << logging_record 
+        << "to: " << datafile.value().string() + "\n" + "Save this record? \n";
 
-    if(confirm(message)) {
+    if(confirm()==ConfirmResult::Yes) {
         std::cout << "Record stored. \n";
         log_file << logging_record;
     } else {
@@ -123,26 +131,28 @@ void save_to_log(){
 } */
 
 // Read the old value first, then add the new one.
-bool save_to_file(const std::string &filename, time_t tot){
-    if(!overwrite_file_int(filename, tot)){
-        std::cout << "Failed to save to file: " << filename;
-        return false;
+Result<std::string> save_to_file(const std::string &filename, time_t tot){
+    
+    auto content = read_from_file(filename);
+    if(!content.ok()){
+        print_log_error(content.error);
+        return {filename, LogError::SaveToFileFailed};
     }
-    else {
-        std::cout << "Successfully saved data: " << tot << " to; " << filename << "\n";
-        return true;
+
+    tot = tot + content.value;
+
+    std::ofstream file(filename, std::ios::app);
+    if (!file.is_open()){
+        return {filename, LogError::IoError};
     }
-}
 
-bool overwrite_file_int(const std::string &filename, int value) {
-    // Open output file in trunc mode
-    std::ofstream file(filename, std::ios::trunc);
-    if (!file) return false;
+    file << tot;
 
-    file << value;
-    if (!file) return false; // check write success
+    if (!file.good()){
+        return {filename, LogError::IoError};
+    }
 
-    return true;
+    return {filename, LogError::None};
 }
 
 
@@ -150,10 +160,10 @@ bool overwrite_file_int(const std::string &filename, int value) {
 bool clear_temp_files_operation(){
     bool ok = true;
     // Returns true only if all calls return true.
-    ok &= clear_file(".break_start.txt");
-    ok &= clear_file(".break_total.txt");
-    ok &= clear_file(".start_state.txt");
-    ok &= clear_file(".end_state.txt");
+    ok &= clear_file(Files::BreakStart.string());
+    ok &= clear_file(Files::BreakTotal.string());
+    ok &= clear_file(Files::SessionStart.string());
+    ok &= clear_file(Files::SessionEnd.string());
     
     return ok;
 }
@@ -181,6 +191,7 @@ Result<std::filesystem::path> create_log_file(const std::string& name){
         return {destination, LogError::CreateFileFailed};
     }
 
+    // Todo 2026-02-11:  Fetch from datastructure.
     file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min,notes \n"; 
     file.close();
 

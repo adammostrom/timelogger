@@ -6,26 +6,25 @@ StatusParams get_current_worked(){
 
     StatusParams statusParams;
     
-    long start_state = get_started();
+    auto start_res = read_from_file(Files::SessionStart);
+    if(!start_res.ok()){
+        print_log_error(start_res.error);
+    }
 
-/*     if(start_state == 0){
-        return;
-    } */
-
-    long break_total = read_from_file(Files::BreakTotal.data());
+    long break_total = read_from_file(Files::BreakTotal).value;
 
     long break_hours = calculate_hour_from_seconds(break_total);
     long break_minutes = calculate_mins_from_seconds(break_total);
     
     time_t now = get_current_time();
-    long seconds = static_cast<int>(difftime(now,start_state)) - break_total;
+    long seconds = static_cast<int>(difftime(now, start_res.value)) - break_total;
 
     if (seconds < 0) seconds = 0;
 
     long hours = calculate_hour_from_seconds(seconds);
     long minutes = calculate_mins_from_seconds(seconds);
 
-    statusParams.start_state = start_state;
+    statusParams.start_state = start_res.value;
     statusParams.hours = hours;
     statusParams.minutes = minutes;
     statusParams.break_hours = break_hours;
@@ -90,29 +89,92 @@ time_t get_current_time(){
 }
 
 
-
-// --- helpers ---
-bool is_session_started() {
-    return get_started() > 0;
-}
-
-// Save timestamp safely, return success
-bool save_timestamp(const std::string &filename, time_t ts) {
-    return save_to_file(filename, ts); 
-}
-
 void start_calculator() {
-    if (is_session_started()) {
-        std::cout << "Session already started.\n";
-        if (!confirm("Proceeding will overwrite, proceed? ")) return;
-    }
 
+    auto start_res = read_from_file(Files::SessionStart);
+    if(!start_res.ok()){
+        print_log_error(start_res.error);
+    }
+    if (start_res.value > 0) {
+        std::cout << "Session already started. Proceeding will overwrite current stored data! \n" ;
+        if (confirm() != ConfirmResult::Yes ) return;
+    }
     time_t now_c = get_current_time();
-    if (!save_timestamp(".start_state.txt", now_c)) {
-        std::cerr << "Failed to save start time!\n";
+
+    auto res = save_to_file(Files::SessionStart, now_c);
+
+    if(!res.ok()){
+        std::cout << "Failed to save start time for: " << res.value << "\n";
+        print_log_error(res.error);
     } else {
         std::cout << "Session started at: " << epoch_to_hhmm(now_c) << "\n";
     }
+}
+
+// 2026-02-11: Redesign break, abandon the timer and have it store to file like start and end state. Prompt from main loop "get_break_start" and if positive, print "on break".
+// 2026-02-15: Question, do start_break actualyl need to check the break start file, if it will delete it when break has ended anyway?
+
+void start_break(){
+    auto break_res = read_from_file(Files::BreakStart);
+
+    // Is this really needed here?
+    if(!break_res.ok()){
+        print_log_error(break_res.error);
+    }
+    if (break_res.value > 0) {
+        std::cout << "Break already started \n";
+        return;
+    }
+    time_t now_c = get_current_time();
+
+    auto res = save_to_file(Files::BreakStart, now_c);
+
+    if(!res.ok()){
+        std::cout << "Failed to save start time for: " << res.value << "\n";
+        print_log_error(res.error);
+        return;
+    } else {
+        std::cout << "Break started at: " << epoch_to_hhmm(now_c) << "\n";
+    }
+}
+// New design, whenever a break is started, create the file, this function
+// then checks if the file exists and then checks the epoch time, and if that is ok, it
+// saves the end time to file then removes the file. The main loop then checks if the file exists and if it does, it prints "on break since: " + epoch_to_hhmm(epoch time from file).
+void end_break(){
+    auto break_start_res = read_from_file(Files::BreakStart);
+
+    if(!break_start_res.ok()){
+        print_log_error(break_start_res.error);
+        return;
+    }
+    if (break_start_res.value <= 0){
+        std::cout << "Break not started, cannot end break time.\n";
+        return;
+    }
+    
+/*     auto break_tot_res = read_from_file(Files::BreakTotal); // ideally optional<long>
+    if(!break_tot_res.ok()){
+        print_log_error(break_tot_res.error);
+        return;
+    } */
+/*     if (break_tot_res.value != 0) {
+        std::cout << "Break end already logged: " << epoch_to_hhmm(break_tot_res.value) << " Proceeding will overwrite, proceed? \n";
+        if (confirm() != ConfirmResult::Yes) return;
+    } */
+    time_t now_c = get_current_time();
+
+    auto diff = difftime(now_c, break_start_res.value);
+
+    // 2026-02-11 bug: if the break_total file doesnt exist, this will fail and not save the break time, even though the break time is valid. Fix by making sure to create the file with 0 if it doesnt exist when starting a session.
+    auto res = save_to_file(Files::BreakTotal, (diff < 0 ? 0 : diff));
+
+    if(!res.ok()){
+        // std::cout << "Failed to save end time for: " << res.value <<"\n";
+        print_log_error(res.error);
+    } else {
+        std::cout << "Break end time saved: " << epoch_to_hhmm(now_c) << "\n";
+    }
+    std::remove(Files::BreakStart.c_str());
 }
 
 
@@ -120,22 +182,33 @@ void start_calculator() {
 Problem: what if the actual epoch = 0? (midnight Jan 1, 1970). Very unlikely, but a professional design would return std::optional<time_t>.
 */
 void end_calculator() {
-    if (!is_session_started()) {
+    
+    
+    auto start_res = read_from_file(Files::SessionStart);
+    if(!start_res.ok()){
+        print_log_error(start_res.error);
+        return;
+    }
+    if(!start_res.value > 0){
         std::cout << "Session not started, cannot end time.\n";
         return;
     }
-
-    auto end_time = read_from_file(".end_state.txt"); // ideally optional<long>
-
-    time_t now_c = get_current_time();
-
-    if (end_time != 0) {
-        std::cout << "End time already logged: " << epoch_to_hhmm(end_time) << "\n";
-        if (!confirm("Proceeding will overwrite, proceed? ")) return;
+    
+    auto end_time_res = read_from_file(Files::SessionEnd); // ideally optional<long>
+    if(!end_time_res.ok()){
+        print_log_error(end_time_res.error);
+        return;
     }
-
-    if (!save_timestamp(".end_state.txt", now_c)) {
-        std::cerr << "Failed to save end time!\n";
+    if (end_time_res.value != 0) {
+        std::cout << "End time already logged: " << epoch_to_hhmm(end_time_res.value) << " Proceeding will overwrite, proceed? \n";
+        if (confirm() != ConfirmResult::Yes) return;
+    }
+    time_t now_c = get_current_time();
+    
+    auto res = save_to_file(Files::SessionEnd, now_c);
+    if(!res.ok()){
+        // std::cout << "Failed to save end time for: " << res.value <<"\n";
+        print_log_error(res.error);
     } else {
         std::cout << "End time saved: " << epoch_to_hhmm(now_c) << "\n";
     }

@@ -24,7 +24,8 @@
 std::vector<Command> commands = {
     {"Start", "s", start_calculator},
     {"End", "e", end_calculator},
-    {"Break", "b", break_start},
+    {"Start Break", "sb", start_break},
+    {"End Break", "eb", end_break},
     //{"Store to Log", "sl", save_to_log},
     {"Manual start entry", "md", manual_session_entry},
     {"Manual break entry", "mb", manual_break_entry},
@@ -61,12 +62,13 @@ int main()
 
         // Just prints the commands
         print_commands(commands);
-
+        
         // Waits for a command to call
         Command operation = handle_input(commands);
 
         // Perform the operation
         operation.action();
+
     }
     return 0;
 }

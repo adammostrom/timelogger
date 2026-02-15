@@ -1,9 +1,10 @@
 .vscode/
-.end_state.txt
 .break_total.txt
-.break_start.txt 
-.start_state.txt 
-.logged_total.txt
+.break_start.txt
+.break_end.txt 
+.session_start.txt
+.session_end.txt 
+.session_total.txt
 docs/*
 datafiles/*
 tests/catch.hpp
