@@ -41,8 +41,9 @@ all: $(TARGET)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-run: $(TARGET)
-	./$(TARGET)
+build: $(TARGET)
+	
+run: ./$(TARGET)
 
 clean:
 	rm -f $(SRC_OBJ) $(MAIN_OBJ) $(TEST_OBJ) $(TARGET) $(TEST_TARGET) $(TMP)

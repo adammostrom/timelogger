@@ -27,10 +27,10 @@ struct LogEntry
 struct StatusParams
 {
     long start_state;
-    long hours;
-    long minutes;
-    long break_hours;
-    long break_minutes;
+    long end_state;
+    long total;
+    long break_start;
+    long break_total;
 };
 
 enum class ConfirmResult

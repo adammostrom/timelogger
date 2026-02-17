@@ -24,7 +24,7 @@ void break_start();
 
 int break_stop();
 
-StatusParams get_current_worked();
+StatusParams read_session_data();
 
 time_t get_current_time();
 

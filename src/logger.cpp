@@ -3,11 +3,6 @@
 // TODO: REFACTOR
 // TODO 2026-02-11 : add helper functions that store backups to prevent erasing data: 
 
-/*
-std::filesystem::copy_file(path, path.string() + ".bak",
-                           std::filesystem::copy_options::overwrite_existing);
-
-*/
 void save_to_log(){
 
     // Ensure directory exists in order to store the data.
@@ -66,8 +61,7 @@ void save_to_log(){
     std::cout << "(Optional): Add note. (c to ignore)\n";
 
     std::getline(std::cin >> std::ws, note);
-    //           ^^^^^^^^^^^^^^^^^
-    // eats leading whitespace safely
+
     if (note == "c") {
         note.clear();
     }
@@ -75,20 +69,20 @@ void save_to_log(){
     std::optional<std::filesystem::path> datafile = file_to_log_data();
 
     std::cout << datafile.value().string() + " selected \n";
-    std::ofstream log_file(datafile.value().string(), std::ios::app); // append mode
+    std::ofstream log_file(datafile.value().string(), std::ios::app); 
 
 
     LogEntry logEntry;
 
-    logEntry.start = start_state;
-    logEntry.end   = end_state;
+    logEntry.start        = start_state;
+    logEntry.end          = end_state;
     logEntry.break_tot_h  = calculate_hour_from_seconds(break_total);
     logEntry.break_tot_m  = calculate_mins_from_seconds(break_total);
     logEntry.worked_h     = calculate_hour_from_seconds(elapsed);
     logEntry.worked_m     = calculate_mins_from_seconds(elapsed);
     logEntry.worked_tot_h = calculate_hour_from_seconds(total_work_time);
     logEntry.worked_tot_m = calculate_mins_from_seconds(total_work_time);
-    logEntry.note = note;
+    logEntry.note         = note;
 
     std::tm start_tm = *std::localtime(&logEntry.start);
     std::tm end_tm = *std::localtime(&logEntry.end);
@@ -101,34 +95,45 @@ void save_to_log(){
         << "to: " << datafile.value().string() + "\n" + "Save this record? \n";
 
     if(confirm()==ConfirmResult::Yes) {
-        std::cout << "Record stored. \n";
-        log_file << logging_record;
+        auto result = safe_write_csv(datafile.value(), logging_record);
+        if (!result.ok()) {
+            print_log_error(result.error);
+        } else {
+            log_file << logging_record;
+            std::cout << "Record stored. \n";
+        }
     } else {
         std::cout << "Record not stored! \n";
     }
     
     log_file.close();
     
-    clear_temp_files_wrapper();
+    clear_temp_files_operation();   
 
     return;
 }
 
+Result<std::filesystem::path> safe_write_csv(const std::filesystem::path& path, const std::string& content)
+{
+    auto temp = path;
+    temp += ".tmp";
 
+    std::ofstream file(temp);
+    if (!file)
+        return { {path}, LogError::CreateFileFailed };
 
+    file << content;
+    file.flush();
 
+    if (!file)
+        return { {path}, LogError::SaveToLogFailed };
 
-/* std::optional<long> read_from_file_op(const std::string &filename) {
-    std::ifstream file(filename);
-    if (!file) return std::nullopt;
+    file.close();
 
-    if (file.peek() == std::ifstream::traits_type::eof()) return std::nullopt;
+    std::filesystem::rename(temp, path);
 
-    long tot;
-    if (!(file >> tot)) return std::nullopt;
-
-    return tot;
-} */
+    return { {path}, LogError::None };
+}
 
 // Read the old value first, then add the new one.
 Result<std::string> save_to_file(const std::string &filename, time_t tot){
@@ -160,7 +165,7 @@ Result<std::string> save_to_file(const std::string &filename, time_t tot){
 // Tries to remove a file safely. Returns true if file didn't exist or was removed successfully.
 bool safe_delete_file(const std::filesystem::path& filepath) {
     if (!std::filesystem::exists(filepath)) {
-        return true; // nothing to delete, consider success
+        return true; 
     }
 
     std::error_code ec;
@@ -171,7 +176,7 @@ bool safe_delete_file(const std::filesystem::path& filepath) {
         return false;
     }
 
-    return !std::filesystem::exists(filepath); // confirm deletion
+    return !std::filesystem::exists(filepath); 
 }
 
 // Deletes all temp files and reports errors individually
@@ -202,7 +207,7 @@ Result<std::filesystem::path> create_log_file(const std::string& name){
     file << "date,start,end,break_hour:min,work_hour:min,tot_hour:min,notes \n"; 
     file.close();
 
-    return {destination, LogError::None}; // TODO, return destination even if successfull?
+    return {destination, LogError::None}; 
 }
 
 

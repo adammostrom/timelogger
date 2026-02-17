@@ -52,16 +52,14 @@ void move_cursor_top()
 int main()
 {
 
+    
+    
     while (!quit_flag())
-    {
-        // Show the current time worked on start
-
-        // move_cursor_top();
-
+    {        
         show_status();
 
-        // Just prints the commands
         print_commands(commands);
+        
         
         // Waits for a command to call
         Command operation = handle_input(commands);

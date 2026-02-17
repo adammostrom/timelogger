@@ -24,8 +24,11 @@
 
 std::atomic<bool>& quit_flag();
 
+long get_session_duration(const long start, const long end);
 
 void clear_temp_files_wrapper();
+
+std::string break_duration_string(long break_total, long break_start);
 
 
 void print_commands(const std::vector<Command> &commands);

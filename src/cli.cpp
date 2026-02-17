@@ -6,22 +6,6 @@ std::atomic<bool> &quit_flag()
     return quit;
 }
 
-// CLI wrapper: handles printing
-// Edit, what is the point of this? Why do the user want to know the directory is created? This is just an ensurance if the user would by accident delete the datafiles directory, so that the log data would be ensured to be able to be stored?
-
-/* Result confirm_directory_cli(const std::string& directory) {
-    if(!std::filesystem::exists(directory)) {
-        std::cout << "No directory found. Creating new directory ... \n";
-        if(ensure_directory_exists(directory)) {
-            std::cout << "Directory created: " << directory << "\n";
-            return
-        } else {
-            std::cout << "Failed to create directory: " << directory << "\n";
-        }
-    }
-}
- */
-
 void print_commands(const std::vector<Command> &commands)
 {
 
@@ -33,82 +17,47 @@ void print_commands(const std::vector<Command> &commands)
     }
 }
 
-// Can be used instead of the checking if session started, as well as gain value in returning the actual start state (in seconds).
-// 2026-02-05 Do we need this fucntion? read_from_file does basically the same thing and is safer.
-/* int get_started()
-{
 
-    // Todo: Make it accept any file (for expanding the program to have several active loggers)
-    std::ifstream start_state_file(Files::StartState.data());
 
-    if (!start_state_file)
+long get_session_duration(const long start, const long end){
+    if (start > 0 && end > 0 && end >= start)
     {
-        return 0;
+        return end - start;
     }
-
-    long temp = 0;
-
-    start_state_file >> temp;
-    start_state_file.close();
-
-    // Return Epoch seconds logged in .start_state.txt
-    return temp;
+    return 0;
 }
- */
-// TODO 2026-02-02 REFACTOR (consider stripping the statusParams of some parameters, like break. Maybe not even needing it since we can do everything here with just hhmm string outputs)
+
+std::string break_duration_string(long break_total, long break_start)
+{
+    if (break_start > 0) {
+        long break_elapsed = std::time(nullptr) - break_start;
+        return "On break : " + duration_to_hhmm(break_elapsed);
+    }
+    else if (break_total > 0) {
+        return duration_to_hhmm(break_total);
+    }
+    return "N/A";
+}
+
 void show_status()
 {
 
-    StatusParams statusParams = get_current_worked();
-
-    // Read absolute times
-    long start_epoch = read_from_file(Files::SessionStart).value;
-
-    if(start_epoch == 0){
-        return;
-    }
-    long end_epoch = read_from_file(Files::SessionEnd).value;
-
-    // Determine "Logged End"
-    std::string end_s = (end_epoch == 0) ? "-----" : epoch_to_hhmm(end_epoch);
+    StatusParams statusParams = read_session_data();
 
     // Compute durations
-    long session_duration = (start_epoch && end_epoch && end_epoch >= start_epoch)
-                                ? end_epoch - start_epoch
-                                : 0;
+    long session_duration = get_session_duration(statusParams.start_state, statusParams.end_state);
 
-    long break_total = read_from_file(Files::BreakTotal).value;
+    std::cout 
+              << "\n === Session Status =================================\n"
+              << " * Started              : " << ((statusParams.start_state > 0) ? epoch_to_hhmm(statusParams.start_state) : "N/A") << "\n"
+              << " * Elapsed              : " << calculate_hour_from_seconds(session_duration) << "h " << calculate_mins_from_seconds(session_duration) << "m" << "\n"
+              << " * Break Total          : " << break_duration_string(statusParams.break_total, statusParams.break_start) << "\n"
+              << " * Ended                : " << ((statusParams.end_state > 0) ? epoch_to_hhmm(statusParams.end_state) : "N/A") << "\n"
+              << " * Session Total        : " << ((session_duration > 0) ? duration_to_hhmm(session_duration) : "N/A") << "\n"
+              << "====================================================\n";
 
-    std::string break_string = duration_to_hhmm(break_total);
 
-    // Helper function for durations
-    auto duration_to_hhmm = [](long seconds) -> std::string
-    {
-        int h = seconds / 3600;
-        int m = (seconds % 3600) / 60;
-        std::ostringstream oss;
-        oss << std::setw(2) << std::setfill('0') << h
-            << ":"
-            << std::setw(2) << std::setfill('0') << m;
-        return oss.str();
-    };
-
-    std::string end_start_diff = (session_duration > 0) ? duration_to_hhmm(session_duration) : "-----";
-
-    // Format start time safely
-    std::tm *tm_start = localtime(&start_epoch);
-
-    // Print table
-    std::cout << "\033[1;36m"
-              << "┌──────────────────────────────────────────┐\n"
-              << " * Started              : " << std::put_time(tm_start, "%H:%M") << "\n"
-              << " * Session since Start  : " << statusParams.hours << "h " << statusParams.minutes << "m" << "\n"
-              << " * Breaks               : " << break_string << "\n"
-              << " * Logged End           : " << std::setw(5) << std::left << end_s << "\n"
-              << " * End - Start diff     : " << end_start_diff << "\n"
-              << "└──────────────────────────────────────────┘\033[0m\n";
-
-    std::cout << std::setfill(' '); // reset fill
+    //std::cout << std::setfill(' '); // reset fill
 }
 
 void input_thread()
@@ -129,7 +78,7 @@ void input_thread()
 void clear_temp_files_wrapper()
 {
 
-    std::cout << "Clear temporary files? Current data will be erased! \n";
+    std::cout << "Clear temporary files? Current data will be erased! ";
 
     if (confirm() == ConfirmResult::Yes)
     {
@@ -143,7 +92,7 @@ void clear_temp_files_wrapper()
     return;
 }
 
-/* ***************** CREATE LOGGING FILE ***************** */
+
 
 void create_logging_file()
 {
@@ -156,12 +105,12 @@ void create_logging_file()
         return;
     }
 
-    const std::string &name = *name_opt; // uncertainty ends here
+    const std::string &name = *name_opt; 
 
     auto dir_status = ensure_directory_exists(DATA_DIRECTORY);
     if (!dir_status.ok())
     {
-        print_log_error(dir_status.error); // Find a way to also emit the value
+        print_log_error(dir_status.error); 
         return;
     }
 
@@ -199,8 +148,7 @@ std::optional<std::string> prompt_name()
     }
 }
 
-// CLI wrapper: prints messages
-// RENAME : prompt_valid_filename
+
 bool prompt_valid_filename(std::string name)
 {
     name.erase(std::remove(name.begin(), name.end(), ' '), name.end());
@@ -217,11 +165,10 @@ bool prompt_valid_filename(std::string name)
 void print_log_files(const std::vector<std::string> &datafiles)
 {
     std::cout << "Log files available: \n";
-    for (int i = 1; i < datafiles.size() + 1; i++)
+    for (long unsigned int i = 1; i < datafiles.size() + 1; i++)
     {
         std::cout << std::to_string(i) << ". " << datafiles[i - 1] << std::endl;
     }
-    //std::cout << "0. " << "Create new datafile \n";
 }
 
 // Returns the filepath for the file to store the data.
@@ -513,7 +460,7 @@ Command handle_input(const std::vector<Command> &commands)
 
         if (input == "q")
         {
-            return commands[commands.size() - 1]; // Hardcoded for now
+            return commands[commands.size() - 1]; // Assuming the last command is always cancel operation
         }
 
         bool is_number = !input.empty() &&
@@ -522,9 +469,9 @@ Command handle_input(const std::vector<Command> &commands)
 
         if (is_number)
         {
-            int index = std::stoi(input);
+            long unsigned int index = std::stoi(input);
 
-            if (index >= 0 && index <= commands.size())
+            if (index <= commands.size())
             {
                 return commands[index];
             }
