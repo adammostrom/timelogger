@@ -1,8 +1,5 @@
 .PHONY: all clean run
 
-# @ = Hides the command from the output
-# - = Wont print if there are any errors
-
 CXX      := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Iinclude
 CXXTESTFLAGS := $(CXXFLAGS) -fsanitize=undefined 
@@ -24,12 +21,12 @@ TEST_SRC := tests/test_utils.cpp
 MAIN_SRC  := main.cpp
 
 
-SRC_OBJ := $(SRC:.cpp=.o) # Converts .cpp → .o
+SRC_OBJ := $(SRC:.cpp=.o) 
 MAIN_OBJ  := $(MAIN_SRC:.cpp=.o)
 TEST_OBJ := $(TEST_SRC:.cpp=.o)
 
 
-TARGET := timerlogger  # Name of final executable
+TARGET := timelogger 
 TEST_TARGET  := test_logger
 
 $(TARGET): $(SRC_OBJ) $(MAIN_OBJ)
@@ -43,7 +40,8 @@ all: $(TARGET)
 
 build: $(TARGET)
 	
-run: ./$(TARGET)
+run:
+	./timelogger
 
 clean:
 	rm -f $(SRC_OBJ) $(MAIN_OBJ) $(TEST_OBJ) $(TARGET) $(TEST_TARGET) $(TMP)
