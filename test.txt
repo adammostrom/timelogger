@@ -1,0 +1,25 @@
+Kontaktperson
+	EPOST: 
+	MOBIL:
+	
+Öpnnande av ärende	
+	Ärendenummer	
+	Ankomstdatum		
+	Artikeltyp	
+	Individnummer	
+	Mjukvaruversion	
+	Modifikationer		
+
+Status	
+	Test & Evaluering
+	Fakturering
+	Avhjälpande underhåll
+
+Service rapport
+Epost	Felrapport										
+Mobil												Frakt
+											Funktionskontroll	Ärende stängt
+												TAT
+												
+												
+Ärendenummer	Kontaktperson	Epost	Mobil	Felrapport	Inköpsorder							
