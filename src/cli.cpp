@@ -41,8 +41,16 @@ std::string break_duration_string(long break_total, long break_start)
 
 void show_status()
 {
+    time_t now_c = get_current_time();
 
     StatusParams statusParams = read_session_data();
+
+    long elapsed = now_c - statusParams.start_state;
+
+    if(statusParams.start_state == 0){
+        elapsed = 0;
+    }
+    
 
     // Compute durations
     long session_duration = get_session_duration(statusParams.start_state, statusParams.end_state);
@@ -50,7 +58,7 @@ void show_status()
     std::cout 
               << "\n === Session Status =================================\n"
               << " * Started              : " << ((statusParams.start_state > 0) ? epoch_to_hhmm(statusParams.start_state) : "N/A") << "\n"
-              << " * Elapsed              : " << calculate_hour_from_seconds(session_duration) << "h " << calculate_mins_from_seconds(session_duration) << "m" << "\n"
+              << " * Elapsed              : " << calculate_hour_from_seconds(elapsed) << "h " << calculate_mins_from_seconds(elapsed) << "m" << "\n"
               << " * Break Total          : " << break_duration_string(statusParams.break_total, statusParams.break_start) << "\n"
               << " * Ended                : " << ((statusParams.end_state > 0) ? epoch_to_hhmm(statusParams.end_state) : "N/A") << "\n"
               << " * Session Total        : " << ((session_duration > 0) ? duration_to_hhmm(session_duration) : "N/A") << "\n"
@@ -267,9 +275,14 @@ void manual_break_entry()
 {
 
     // Suggestion, ask for total time in minutes instead. Much easier
-    std::cout << "Provide the break duration in minutes: \n";
+    std::cout << "Provide the break duration in minutes: (0 to cancel) \n";
 
     long input_mins = read_positive_integer();
+
+    if(input_mins == 0){
+        std::cout << "Cancelled. \n";
+        return;
+    }
 
     long secs = input_mins * 60;
 
@@ -290,16 +303,24 @@ void manual_break_entry()
 
 void manual_session_entry(){
 
-    if (read_from_file(Files::SessionStart).value > 0)
-    {
+    auto res = read_from_file(Files::SessionStart);
+    if(!res.ok()){
+        print_log_error(res.error);
+        return;
+    }
+
+    if(res.value > 0){
         std::cout <<  "Warning. Session already logged as started. Proceeding will overwrite.";
         if (confirm() == ConfirmResult::Yes)
         {
             manual_entry(Files::SessionStart);
             return;
         }
+    } else if (res.value == 0){
+        manual_entry(Files::SessionStart);
+    } else {
+        std::cout << "Cancelled.\n";
     }
-    std::cout << "Cancelled.\n";
     return;
 }
 
@@ -409,11 +430,16 @@ long read_positive_integer()
     {
         std::cin >> value;
 
+        // Ugly fix, for now.
+        if(value == 0){
+            return 0;
+        }
+
         if (std::cin.fail() || value < 0)
         {
             std::cin.clear();                                                   // clear fail flag
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // discard bad input
-            std::cout << "Invalid input. Please enter a positive integer: ";
+            std::cout << "Invalid input. Please enter a positive integer: (0 to cancel) ";
             value = -1;
             continue;
         }

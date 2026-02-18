@@ -8,6 +8,6 @@
 docs/*
 datafiles/*
 tests/catch.hpp
-timerlogger
+timelogger
 src/*.o
 main.o
