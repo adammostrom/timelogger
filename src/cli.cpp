@@ -193,7 +193,7 @@ std::optional<std::filesystem::path> file_to_log_data(){
 
     auto datafiles = read_from_directory(DATA_DIRECTORY);
     if (datafiles.empty()) {
-        std::cout << "No log files available.\n";
+        std::cout << "No log files available. Create a log file using the option from the commands menu. \n";
         return std::nullopt;
     }
 
