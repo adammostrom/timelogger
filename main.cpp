@@ -26,7 +26,7 @@ std::vector<Command> commands = {
     {"End", "e", end_calculator},
     {"Start Break", "sb", start_break},
     {"End Break", "eb", end_break},
-    //{"Store to Log", "sl", save_to_log},
+    {"Store to Log", "sl", save_to_log},
     {"Manual start entry", "md", manual_session_entry},
     {"Manual break entry", "mb", manual_break_entry},
     {"Manual end entry", "me", manual_end_entry},
