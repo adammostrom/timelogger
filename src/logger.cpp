@@ -56,6 +56,11 @@ void save_to_log(){
  */
 
     // TODO: Make into separate CLI function
+    
+    std::optional<std::filesystem::path> datafile = file_to_log_data();
+    
+    std::cout << datafile.value().string() + " selected \n";
+    
 
     std::string note;
     std::cout << "(Optional): Add note. (c to ignore)\n";
@@ -65,12 +70,6 @@ void save_to_log(){
     if (note == "c") {
         note.clear();
     }
-        
-    std::optional<std::filesystem::path> datafile = file_to_log_data();
-
-    std::cout << datafile.value().string() + " selected \n";
-    std::ofstream log_file(datafile.value().string(), std::ios::app); 
-
 
     LogEntry logEntry;
 
@@ -95,44 +94,33 @@ void save_to_log(){
         << "to: " << datafile.value().string() + "\n" + "Save this record? \n";
 
     if(confirm()==ConfirmResult::Yes) {
-        auto result = safe_write_csv(datafile.value(), logging_record);
+        auto result = append_csv(datafile.value(), logging_record);
         if (!result.ok()) {
             print_log_error(result.error);
         } else {
-            log_file << logging_record;
             std::cout << "Record stored. \n";
         }
     } else {
         std::cout << "Record not stored! \n";
     }
-    
-    log_file.close();
-    
+
     clear_temp_files_operation();   
 
     return;
 }
 
-Result<std::filesystem::path> safe_write_csv(const std::filesystem::path& path, const std::string& content)
+Result<std::filesystem::path>append_csv(const std::filesystem::path& path, const std::string& content)
 {
-    auto temp = path;
-    temp += ".tmp";
-
-    std::ofstream file(temp);
+    std::ofstream file(path, std::ios::app);
     if (!file)
-        return { {path}, LogError::CreateFileFailed };
+        return {path, LogError::IoError};
 
     file << content;
-    file.flush();
 
     if (!file)
-        return { {path}, LogError::SaveToLogFailed };
+        return {path, LogError::IoError};
 
-    file.close();
-
-    std::filesystem::rename(temp, path);
-
-    return { {path}, LogError::None };
+    return {path, LogError::None};
 }
 
 // Read the old value first, then add the new one.
