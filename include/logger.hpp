@@ -10,21 +10,19 @@
 #include <fstream>
 #include <optional>
 
-
-Result<std::filesystem::path> create_log_file(const std::string& name);
+Result<std::filesystem::path> create_log_file(const std::string &name);
 
 void save_to_log();
 
 Result<std::string> save_to_file(const std::string &filename, time_t tot);
+Result<std::string> overwrite_save_to_file(const std::string &filename, time_t tot);
 
 bool clear_file(const std::string &filename);
 
 bool clear_temp_files_operation();
 
-bool overwrite_file_int(const std::string &filename, int value);
-
 std::optional<long> read_from_file_op(const std::string &filename);
 
-bool safe_delete_file(const std::filesystem::path& filepath);
+bool safe_delete_file(const std::filesystem::path &filepath);
 
-Result<std::filesystem::path> append_csv(const std::filesystem::path& path, const std::string& content);
+Result<std::filesystem::path> append_csv(const std::filesystem::path &path, const std::string &content);

@@ -261,7 +261,8 @@ void manual_entry(const std::string &filename)
         return;
     }
 
-    auto res = save_to_file(filename,entered_time);
+    auto res = overwrite_save_to_file(filename, entered_time);
+    //auto res = save_to_file(filename,entered_time);
     if(!res.ok()){
         std::cout << "Time not saved for: " << res.value;
         print_log_error(res.error);
