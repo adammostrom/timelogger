@@ -19,7 +19,7 @@
 
 
 #define LOG_FILE_MIN 4
-#define LOG_FILE_MAX 20
+#define LOG_FILE_MAX 50
 
 
 std::atomic<bool>& quit_flag();

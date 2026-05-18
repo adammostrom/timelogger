@@ -18,4 +18,6 @@ namespace Files {
 // Directories
 
 inline std::filesystem::path DATA_DIRECTORY = "datafiles";
+inline std::filesystem::path DATA_DIRECTORY_SLASH = "datafiles/";
+
 inline std::filesystem::path WORK_HOURS = "datafiles/work_hours.csv";

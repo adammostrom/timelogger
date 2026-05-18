@@ -62,14 +62,7 @@ void save_to_log(){
     std::cout << datafile.value().string() + " selected \n";
     
 
-    std::string note;
-    std::cout << "(Optional): Add note. (c to ignore)\n";
-
-    std::getline(std::cin >> std::ws, note);
-
-    if (note == "c") {
-        note.clear();
-    }
+    std::string note = prompt_note();
 
     LogEntry logEntry;
 
@@ -107,6 +100,23 @@ void save_to_log(){
     clear_temp_files_operation();   
 
     return;
+}
+
+std::string prompt_note(){
+    std::string note;
+    std::cout << "(Optional): Add note. (c to ignore)\n";
+
+    std::getline(std::cin >> std::ws, note);
+
+    for (char& c : note){
+        if (c == ','){
+            c = '.';
+        }
+    }
+    if (note == "c") {
+        note.clear();
+    }
+    return note;
 }
 
 Result<std::filesystem::path>append_csv(const std::filesystem::path& path, const std::string& content)
@@ -221,5 +231,10 @@ Result<std::filesystem::path> create_log_file(const std::string& name){
     return {destination, LogError::None}; 
 }
 
+
+bool clear_file(const std::string &filename) {
+    std::ofstream file(filename, std::ios::trunc);
+    return file.is_open();
+}
 
 

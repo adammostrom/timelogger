@@ -41,6 +41,7 @@ std::string break_duration_string(long break_total, long break_start)
 
 void show_status()
 {
+    
     time_t now_c = get_current_time();
 
     StatusParams statusParams = read_session_data();
@@ -86,7 +87,7 @@ void input_thread()
 void clear_temp_files_wrapper()
 {
 
-    std::cout << "Clear temporary files? Current data will be erased! ";
+    std::cout << "Reseting timer will clear temporary files. Current data will be erased. Proceed? ";
 
     if (confirm() == ConfirmResult::Yes)
     {

@@ -90,9 +90,13 @@ void start_calculator() {
     if(!start_res.ok()){
         print_log_error(start_res.error);
     }
+    // If there already is data stored in the session start
     if (start_res.value > 0) {
         std::cout << "Session already started. Proceeding will overwrite current stored data! \n" ;
         if (confirm() != ConfirmResult::Yes ) return;
+        clear_temp_files_operation();
+        
+        //if (!clear_file(DATA_DIRECTORY_SLASH.string() + Files::SessionStart.string())) return;
     }
     time_t now_c = get_current_time();
 

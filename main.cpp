@@ -16,6 +16,8 @@
 \033[?25h     → show cursor
  */
 
+void clear_screen();
+
  void cancel_command()
 {
     quit_flag() = true;
@@ -30,9 +32,10 @@ std::vector<Command> commands = {
     {"Manual start entry", "md", manual_session_entry},
     {"Manual break entry", "mb", manual_break_entry},
     {"Manual end entry", "me", manual_end_entry},
-    {"Clear temporary files", "cl", clear_temp_files_wrapper},
+    {"Reset timer", "cl", clear_temp_files_wrapper},
     //{"Logged data overview", "o", logged_data_overview},
     {"Create logging file", "nf", create_logging_file},
+    {"Refresh", "r", clear_screen},
     //{"Create new datafile", "nd", create_data_file},
     {"Cancel", "c", cancel_command}
 };
@@ -41,24 +44,26 @@ std::vector<Command> commands = {
 void clear_screen()
 {
     // POSIX
-    std::cout << "\033[2J\033[H"; // Clear screen + move cursor to top-left
+    std::cout << "\033[H\033[2J\033[3J" << std::flush;
+    show_status();
+    print_commands(commands);
 }
 
-void move_cursor_top()
+/* void move_cursor_top()
 {
     std::cout << "\033[H"; // Move cursor to top-left without clearing
-}
+} */
 
 int main()
 {
 
     
+    show_status();
+
+    print_commands(commands);
     
     while (!quit_flag())
     {        
-        show_status();
-
-        print_commands(commands);
         
         
         // Waits for a command to call
