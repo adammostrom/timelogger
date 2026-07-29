@@ -36,7 +36,7 @@ std::string break_duration_string(long break_total, long break_start)
     else if (break_total > 0) {
         return duration_to_hhmm(break_total);
     }
-    return "N/A";
+    return "0";
 }
 
 void show_status()
@@ -62,6 +62,7 @@ void show_status()
               << " * Elapsed              : " << calculate_hour_from_seconds(elapsed) << "h " << calculate_mins_from_seconds(elapsed) << "m" << "\n"
               << " * Break Total          : " << break_duration_string(statusParams.break_total, statusParams.break_start) << "\n"
               << " * Ended                : " << ((statusParams.end_state > 0) ? epoch_to_hhmm(statusParams.end_state) : "N/A") << "\n"
+              << " * Work Total (-break)  : " << ((elapsed > 0 ) ? duration_to_hhmm(elapsed - statusParams.break_total) : "0") << "\n"
               << " * Session Total        : " << ((session_duration > 0) ? duration_to_hhmm(session_duration) : "N/A") << "\n"
               << "====================================================\n";
 
