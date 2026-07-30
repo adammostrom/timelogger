@@ -60,7 +60,7 @@ void show_status()
               << "\n === Session Status =================================\n"
               << " * Started              : " << ((statusParams.start_state > 0) ? epoch_to_hhmm(statusParams.start_state) : "N/A") << "\n"
               << " * Elapsed              : " << calculate_hour_from_seconds(elapsed) << "h " << calculate_mins_from_seconds(elapsed) << "m" << "\n"
-              << " * Break Total          : " << break_duration_string(statusParams.break_total, statusParams.break_start) << "\n"
+              << " * Break Total          : " << duration_to_hhmm(statusParams.break_total)/*break_duration_string(statusParams.break_total, statusParams.break_start)*/ << "\n"
               << " * Ended                : " << ((statusParams.end_state > 0) ? epoch_to_hhmm(statusParams.end_state) : "N/A") << "\n"
               << " * Work Total (-break)  : " << ((elapsed > 0 ) ? duration_to_hhmm(elapsed - statusParams.break_total) : "0") << "\n"
               << " * Session Total        : " << ((session_duration > 0) ? duration_to_hhmm(session_duration) : "N/A") << "\n"
@@ -98,6 +98,21 @@ void clear_temp_files_wrapper()
     else
     {
         std::cout << "Temporary files not cleared! \n";
+    }
+    return;
+}
+
+void clear_break_file(){
+        std::cout << "Break time stored will be erased. Proceed? ";
+
+    if (confirm() == ConfirmResult::Yes)
+    {
+        overwrite_save_to_file(Files::BreakTotal, 0);
+        std::cout << "Break time reset! \n";
+    }
+    else
+    {
+        std::cout << "No operation performed. \n";
     }
     return;
 }
@@ -289,14 +304,15 @@ void manual_break_entry()
 
     long secs = input_mins * 60;
 
+    // Seconds
     time_t tot = read_from_file(Files::BreakTotal).value;
 
-    tot += secs;
+    tot = tot + secs;
     std::cout << "Break time for logging: " << std::to_string(input_mins) <<  " minutes. Proceed? ";
 
     if (confirm() == ConfirmResult::Yes)
     {
-        save_to_file(Files::BreakTotal, tot);
+        overwrite_save_to_file(Files::BreakTotal, tot);
         return;
     }
     std::cout << "Break time not saved\n";

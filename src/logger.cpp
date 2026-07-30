@@ -158,14 +158,14 @@ Result<std::string> save_to_file(const std::string &filename, time_t tot){
     return {filename, LogError::None};
 }
 
-// Read the old value first, then add the new one.
+// Save the new data to the file, truncating/overwriting the original value
 Result<std::string> overwrite_save_to_file(const std::string &filename, time_t tot){
     
-    auto content = read_from_file(filename);
+/*     auto content = read_from_file(filename);
     if(!content.ok()){
         print_log_error(content.error);
         return {filename, LogError::SaveToFileFailed};
-    }
+    } */
 
     std::ofstream file(filename, std::ios::trunc);
     if (!file.is_open()){

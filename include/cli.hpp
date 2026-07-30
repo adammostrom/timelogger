@@ -28,6 +28,8 @@ long get_session_duration(const long start, const long end);
 
 void clear_temp_files_wrapper();
 
+void clear_break_file();
+
 std::string break_duration_string(long break_total, long break_start);
 
 

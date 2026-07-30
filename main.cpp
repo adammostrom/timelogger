@@ -33,6 +33,7 @@ std::vector<Command> commands = {
     {"Manual break entry", "mb", manual_break_entry},
     {"Manual end entry", "me", manual_end_entry},
     {"Reset timer", "cl", clear_temp_files_wrapper},
+    {"Reset stored break", "rsb", clear_break_file},
     //{"Logged data overview", "o", logged_data_overview},
     {"Create logging file", "nf", create_logging_file},
     {"Refresh", "r", clear_screen},
