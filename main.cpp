@@ -26,7 +26,7 @@ void clear_screen();
 std::vector<Command> commands = {
     {"Start", "s", start_calculator},
     {"End", "e", end_calculator},
-    {"Start Break", "sb", start_break},
+    {"Start Break", "sb", break_start},
     {"End Break", "eb", end_break},
     {"Store to Log", "sl", save_to_log},
     {"Manual start entry", "md", manual_session_entry},

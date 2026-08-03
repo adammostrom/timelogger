@@ -376,39 +376,41 @@ void break_start()
     long elapsed = start_timer(now_c);
 
     // Unix gets the total seconds, the difference will be in seconds. Divide by 60 and we get minutes
-    long seconds = static_cast<int>(difftime(now_c, elapsed));
-    long hours   = calculate_hour_from_seconds(seconds);
-    long minutes = calculate_mins_from_seconds(seconds);
+    //long seconds = static_cast<int>(difftime(elapsed, now_c));
+    long hours   = calculate_hour_from_seconds(elapsed);
+    long minutes = calculate_mins_from_seconds(elapsed);
 
+    
     auto break_tot_log = read_from_file(Files::BreakTotal);
     if(!break_tot_log.ok()){
         print_log_error(break_tot_log.error);
         return;
     }
 
-    int remains = seconds % 60;
+    int remains = elapsed % 60;
 
     std::cout << "\nBreak ended. Summary: " 
               << hours << std::setw(2) << std::setfill('0') << " hours, "
               << minutes << std::setw(2) << std::setfill('0') << " minutes and "
-              << remains << " seconds. Save break period? (or e for edit) ";
+              << remains << " seconds. Save break period?\n";
+    if (confirm() != ConfirmResult::Yes){
+        std::cout << "Break period not saved. \n";
+    }
 
-    std::string command;
+/*     std::string command;
     std::cin >> command;
 
     if (command == "e")
     {
         manual_break_entry();
-    }
+    } */
     
-    if (confirm() != ConfirmResult::Yes){
-        std::cout << "Break period not saved. \n";
-    }
 
     long total = break_tot_log.value + elapsed;
     save_to_file(Files::BreakTotal, total);
 
     std::cout << "Break period saved.\n";
+    
 }
 
 
